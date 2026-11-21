@@ -5,6 +5,8 @@ import { startWeixinBindSession, type WeixinBindSession } from "./weixin-bind.js
 export interface WeixinBindPanelOptions {
   onBound: (credentials: { botId: string; token: string; baseUrl: string }) => Promise<void> | void;
   onManual: () => void;
+  /** 等待 sidecar 侧 IM 通道上线；超时返回 false */
+  waitForOnline?: (timeoutMs: number) => Promise<boolean>;
 }
 
 const HTML = `<!DOCTYPE html>
@@ -60,6 +62,12 @@ const HTML = `<!DOCTYPE html>
       status.textContent = '绑定成功：' + message.botId + '，正在启动连接…';
       status.className = 'status success';
       verify.style.display = 'none';
+    } else if (message.type === 'ready') {
+      status.textContent = message.ok
+        ? '连接已建立，可以在微信中给机器人发消息了'
+        : '已启动，但暂未确认在线；可先发送消息测试，或查看「CodeArts QQ Bot」输出日志';
+      status.className = message.ok ? 'status success' : 'status';
+      document.getElementById('refresh').textContent = '重新扫码';
     } else if (message.type === 'expired') {
       status.textContent = '二维码已过期，正在刷新…';
     } else if (message.type === 'failed') {
@@ -109,7 +117,16 @@ export function showWeixinBindPanel(options: WeixinBindPanelOptions): vscode.Web
           session?.dispose();
           session = undefined;
           post({ type: "success", botId: `${event.botId.slice(0, 6)}***` });
-          void options.onBound({ botId: event.botId, token: event.token, baseUrl: event.baseUrl });
+          void (async () => {
+            try {
+              await options.onBound({ botId: event.botId, token: event.token, baseUrl: event.baseUrl });
+            } catch (err) {
+              post({ type: "failed", reason: err instanceof Error ? err.message : String(err) });
+              return;
+            }
+            const ok = await options.waitForOnline?.(20_000).catch(() => false);
+            post({ type: "ready", ok: ok === true });
+          })();
           return;
         }
         if (event.kind === "expired") {

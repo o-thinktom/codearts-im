@@ -117,6 +117,8 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
   });
 
   let started = false;
+  let online = false;
+  let channelRef: string | undefined;
   const maybeStart = (): void => {
     if (!started && pending.credentials !== undefined && pending.kernel !== undefined) {
       started = true;
@@ -149,7 +151,7 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
       },
       accessGet: () => toSnapshot(),
       accessMutate: (action) => applyAction(action),
-      statusGet: () => ({ online: app !== undefined, kernel: pending.kernel?.baseUrl ?? null }),
+      statusGet: () => ({ online, channel: channelRef, kernel: pending.kernel?.baseUrl ?? null }),
     },
   });
 
@@ -193,6 +195,7 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
   }
 
   const channel = credentials.channel ?? "qq";
+  channelRef = channel;
   const sessionAppId = credentials.channel === "weixin" ? credentials.botId : credentials.appId;
 
   const lock: InstanceLock | undefined = acquireInstanceLock(
@@ -214,6 +217,7 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
       logger,
       media: new WeixinMedia(credentials.baseUrl),
       mediaRoot: path.join(dataDir, "media"),
+      workspace: options.workspace,
       onStaleToken: (reason) => logger.error("weixin token expired, re-scan required", { reason }),
     });
   } else {
@@ -267,6 +271,20 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
   logger.info("sidecar running", { c2cMode: "open", groupMode: "open", dataDir });
 
   let stopped = false;
+  const watchOnline = async (): Promise<void> => {
+    const deadline = Date.now() + 60_000;
+    while (!stopped && !online && Date.now() < deadline) {
+      if (adapter.connected) {
+        online = true;
+        ipc.broadcast("status.changed", { online: true, channel: adapter.id });
+        logger.info("channel online", { channel: adapter.id });
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  };
+  void watchOnline();
+
   return {
     ready,
     async stop(): Promise<void> {

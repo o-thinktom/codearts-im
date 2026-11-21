@@ -197,6 +197,16 @@ export function activate(context: vscode.ExtensionContext): void {
       context.subscriptions.push(panel);
     }),
     vscode.commands.registerCommand("codeartsQqbot.bindWeixin", () => {
+      const waitForOnline = async (timeoutMs: number): Promise<boolean> => {
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+          const status = (await bridge?.status()) as { online?: boolean } | undefined;
+          if (status?.online === true) return true;
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+        return false;
+      };
+
       const panel = showWeixinBindPanel({
         onBound: async ({ botId, token, baseUrl }) => {
           await context.secrets.store("weixin/bot-id", botId);
@@ -211,6 +221,7 @@ export function activate(context: vscode.ExtensionContext): void {
         onManual: () => {
           void vscode.commands.executeCommand("codeartsQqbot.bindManual");
         },
+        waitForOnline,
       });
       context.subscriptions.push(panel);
     }),

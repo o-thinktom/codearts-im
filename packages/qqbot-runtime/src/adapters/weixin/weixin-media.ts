@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const CDN_BASE = "https://novac2c.cdn.weixin.qq.com/c2c";
@@ -75,6 +75,24 @@ export function decryptMedia(ciphertext: Buffer, key: Buffer): Buffer {
 export function encryptMedia(plaintext: Buffer, key: Buffer): Buffer {
   const cipher = createCipheriv("aes-128-ecb", key, null);
   return Buffer.concat([cipher.update(plaintext), cipher.final()]);
+}
+
+/** 按文件头识别常见图片格式，返回扩展名（含点）；无法识别返回 undefined */
+export function detectImageExt(buffer: Buffer): string | undefined {
+  if (buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    return ".png";
+  }
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return ".jpg";
+  if (buffer.length >= 6 && buffer.subarray(0, 4).toString("ascii") === "GIF8") return ".gif";
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return ".webp";
+  }
+  if (buffer.length >= 2 && buffer[0] === 0x42 && buffer[1] === 0x4d) return ".bmp";
+  return undefined;
 }
 
 export function mediaDownloadUrl(media: WeixinMediaRef | undefined): string {
@@ -219,12 +237,13 @@ export class WeixinMedia {
     kind: "image" | "file",
   ): Promise<UploadedMedia> {
     const bytes = readFileSync(filePath);
-    const size = statSync(filePath).size;
+    const size = bytes.length;
+    const actualKind: "image" | "file" = kind === "image" || detectImageExt(bytes) !== undefined ? "image" : "file";
     const fileKey = randomBytes(16).toString("hex");
     const aesKey = randomBytes(16);
     const rawMd5 = createHash("md5").update(bytes).digest("hex");
     const ciphertext = encryptMedia(bytes, aesKey);
-    const mediaType: 1 | 3 = kind === "image" ? 1 : 3;
+    const mediaType: 1 | 3 = actualKind === "image" ? 1 : 3;
 
     const uploadUrl = await this.getUploadUrl(
       token,
@@ -245,11 +264,11 @@ export class WeixinMedia {
 
     const name = path.basename(filePath);
     const item =
-      kind === "image"
+      actualKind === "image"
         ? { type: 2, image_item: { media, mid_size: ciphertext.length } }
         : { type: 4, file_item: { media, file_name: name, len: String(size) } };
 
-    return { item, media, ciphertextSize: ciphertext.length, size, name, kind };
+    return { item, media, ciphertextSize: ciphertext.length, size, name, kind: actualKind };
   }
 
   async sendMedia(

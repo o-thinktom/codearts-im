@@ -151,6 +151,29 @@ describe("WeixinMedia", () => {
     expect(result.item).toMatchObject({ type: 4, file_item: { file_name: "report.pdf", len: "13" } });
   });
 
+  it("文件头为图片时按图片上传（忽略扩展名）", async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "weixin-media-"));
+    const file = path.join(dir, "download");
+    writeFileSync(file, PNG);
+
+    let mediaType: number | undefined;
+    const media = new WeixinMedia("https://ilinkai.weixin.qq.com/", {
+      fetchImpl: (async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("getuploadurl")) {
+          mediaType = (JSON.parse(String(init?.body)) as { media_type: number }).media_type;
+          return json({ upload_param: "p" });
+        }
+        return new Response("", { status: 200, headers: { "x-encrypted-param": "dp" } });
+      }) as typeof fetch,
+    });
+
+    const result = await media.upload("tok", "wx-1", file, "file");
+    expect(mediaType).toBe(1);
+    expect(result.kind).toBe("image");
+    expect(result.item).toMatchObject({ type: 2 });
+  });
+
   it("上传失败在缺少 x-encrypted-param 时抛出", async () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), "weixin-media-"));
     const file = path.join(dir, "a.png");

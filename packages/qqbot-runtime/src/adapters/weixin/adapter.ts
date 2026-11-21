@@ -1,11 +1,11 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { chunkMarkdownText, createNoopLogger } from "@codearts-qqbot/core";
 import type { Attachment, InboundMessage, Logger, PresentedFile, ReplyTarget } from "@codearts-qqbot/core";
 import type { ChannelCapability, ImAdapter } from "../../transport/adapter.js";
 import type { ImMessageHandler, SendKind } from "../../transport/outbound-types.js";
 import { WeixinApi, WeixinApiError, type WeixinMessage } from "./weixin-api.js";
-import { WeixinMedia, type WeixinMediaItem, type WeixinMediaRef } from "./weixin-media.js";
+import { WeixinMedia, detectImageExt, type WeixinMediaItem, type WeixinMediaRef } from "./weixin-media.js";
 import type { WeixinStateStore } from "./weixin-state.js";
 
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"]);
@@ -15,20 +15,7 @@ function safeSegment(value: string, limit = 64): string {
 }
 
 function imageExtFromBytes(buffer: Buffer, filename?: string): string {
-  if (buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
-    return ".png";
-  }
-  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return ".jpg";
-  if (buffer.length >= 6 && buffer.subarray(0, 4).toString("ascii") === "GIF8") return ".gif";
-  if (
-    buffer.length >= 12 &&
-    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
-    buffer.subarray(8, 12).toString("ascii") === "WEBP"
-  ) {
-    return ".webp";
-  }
-  if (buffer.length >= 2 && buffer[0] === 0x42 && buffer[1] === 0x4d) return ".bmp";
-  return fileExt(filename, ".img");
+  return detectImageExt(buffer) ?? fileExt(filename, ".img");
 }
 
 function fileExt(filename?: string, fallback = ".bin"): string {
@@ -81,6 +68,8 @@ export interface WeixinAdapterOptions {
   media?: WeixinMedia;
   /** 入站媒体落盘根目录 */
   mediaRoot?: string;
+  /** 工作区根目录：解析交付物的相对路径 */
+  workspace?: string;
 }
 
 /**
@@ -127,6 +116,8 @@ export class WeixinAdapter implements ImAdapter {
     this.abort = new AbortController();
     try {
       await this.options.api.notifyStart(this.options.token);
+      // notifyStart 成功即表示 token 有效、通道可用；首次 getUpdates 可能挂起 35s 长轮询
+      this.online = true;
     } catch (err) {
       this.logger.warn("weixin notifyStart failed", { err: String(err) });
     }
@@ -305,29 +296,43 @@ export class WeixinAdapter implements ImAdapter {
 
   async sendFile(target: ReplyTarget, files: PresentedFile[]): Promise<void> {
     const media = this.options.media;
-    if (media === undefined) {
-      for (const file of files) {
-        await this.sendText(target, `文件：${file.name}\n${file.path}`, "file");
-      }
-      return;
-    }
-
     const contextToken = this.contextTokens.get(target.targetId);
     for (const file of files) {
-      const size = file.size ?? 0;
-      if (size > this.capability.maxFileBytes) {
-        await this.sendText(target, `文件过大（${size} 字节），请从工作区获取：${file.path}`, "file");
+      const resolved = this.resolvePath(file.path);
+      if (media === undefined) {
+        await this.sendText(target, `文件：${file.name}\n${resolved}`, "file");
         continue;
       }
+
+      let size = 0;
+      try {
+        size = statSync(resolved).size;
+      } catch {
+        await this.sendText(target, `文件不存在：${file.name}\n${resolved}`, "error");
+        continue;
+      }
+      if (size > this.capability.maxFileBytes) {
+        await this.sendText(target, `文件过大（${(size / 1024 / 1024).toFixed(1)}MB）：${file.name}`, "error");
+        continue;
+      }
+
       const kind: "image" | "file" = IMAGE_EXTENSIONS.has(fileExt(file.name, "")) ? "image" : "file";
       try {
-        const uploaded = await media.upload(this.options.token, target.targetId, file.path, kind);
+        const uploaded = await media.upload(this.options.token, target.targetId, resolved, kind);
         await media.sendMedia(this.options.token, target.targetId, uploaded.item, contextToken);
+        this.logger.info("weixin file sent", { name: file.name, kind, bytes: size });
       } catch (err) {
-        this.logger.warn("weixin sendFile failed", { name: file.name, err: String(err) });
-        await this.sendText(target, `文件：${file.name}\n${file.path}`, "file");
+        const reason = err instanceof Error ? err.message : String(err);
+        this.logger.warn("weixin sendFile failed", { name: file.name, err: reason });
+        await this.sendText(target, `文件发送失败：${file.name}\n原因：${reason}\n路径：${resolved}`, "error");
       }
     }
+  }
+
+  private resolvePath(filePath: string): string {
+    if (path.isAbsolute(filePath)) return filePath;
+    const base = this.options.workspace;
+    return base === undefined ? path.resolve(filePath) : path.join(base, filePath);
   }
 
   async sendTyping(target: ReplyTarget, on: boolean): Promise<void> {

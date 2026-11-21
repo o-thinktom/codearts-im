@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, statSync, truncateSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -72,7 +72,7 @@ class FakeMedia {
 
 function setup(
   api: FakeApi,
-  extra: { media?: FakeMedia; mediaRoot?: string } = {},
+  extra: { media?: FakeMedia; mediaRoot?: string; workspace?: string } = {},
 ): { adapter: WeixinAdapter; messages: InboundMessage[]; dir: string } {
   const dir = mkdtempSync(path.join(os.tmpdir(), "weixin-adapter-"));
   const adapter = new WeixinAdapter({
@@ -82,6 +82,7 @@ function setup(
     state: new WeixinStateStore(path.join(dir, "weixin-state.json")),
     ...(extra.media === undefined ? {} : { media: extra.media as unknown as WeixinMedia }),
     ...(extra.mediaRoot === undefined ? {} : { mediaRoot: extra.mediaRoot }),
+    ...(extra.workspace === undefined ? {} : { workspace: extra.workspace }),
   });
   const messages: InboundMessage[] = [];
   adapter.onMessage((m) => {
@@ -110,6 +111,7 @@ describe("WeixinAdapter", () => {
     ];
     const { adapter, messages } = setup(api);
     await adapter.start();
+    expect(adapter.connected).toBe(true);
     await new Promise((r) => setTimeout(r, 120));
 
     expect(messages[0]).toMatchObject({
@@ -287,6 +289,8 @@ describe("WeixinAdapter", () => {
     const media = new FakeMedia();
     const { adapter, dir } = setup(api, { media });
     const file = path.join(dir, "big.zip");
+    writeFileSync(file, "");
+    truncateSync(file, 21 * 1024 * 1024);
 
     await adapter.sendFile(
       { scope: "c2c", channel: "weixin", targetId: "wx-1" },
@@ -295,5 +299,37 @@ describe("WeixinAdapter", () => {
 
     expect(media.uploaded).toHaveLength(0);
     expect(api.sent[0]?.text).toContain("文件过大");
+  });
+
+  it("sendFile 按工作区解析相对路径", async () => {
+    const api = new FakeApi();
+    const media = new FakeMedia();
+    const workspace = mkdtempSync(path.join(os.tmpdir(), "weixin-ws-"));
+    const { adapter } = setup(api, { media, workspace });
+    mkdirSync(path.join(workspace, "out"));
+    const file = path.join(workspace, "out", "result.txt");
+    writeFileSync(file, "hello");
+
+    await adapter.sendFile(
+      { scope: "c2c", channel: "weixin", targetId: "wx-1" },
+      [{ path: path.join("out", "result.txt"), name: "result.txt", size: 5 }],
+    );
+
+    expect(media.uploaded).toEqual([{ filePath: file, kind: "file" }]);
+    expect(media.sent).toHaveLength(1);
+  });
+
+  it("sendFile 文件不存在时提示而不上传", async () => {
+    const api = new FakeApi();
+    const media = new FakeMedia();
+    const { adapter, dir } = setup(api, { media });
+
+    await adapter.sendFile(
+      { scope: "c2c", channel: "weixin", targetId: "wx-1" },
+      [{ path: path.join(dir, "missing.txt"), name: "missing.txt" }],
+    );
+
+    expect(media.uploaded).toHaveLength(0);
+    expect(api.sent[0]?.text).toContain("文件不存在");
   });
 });
