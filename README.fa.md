@@ -1,6 +1,8 @@
 <div dir="rtl" lang="fa">
 
-# CodeArts IM
+# codearts-im
+
+> CodeArts IM Gateway · نگه‌دارنده: ThinkTom
 
 [简体中文](README.md) | [English](README.en.md) | [Русский](README.ru.md) | **فارسی** | [Türkçe](README.tr.md) | [Español](README.es.md)
 

@@ -1,4 +1,6 @@
-# CodeArts IM
+# codearts-im
+
+> CodeArts IM Gateway · Mantenido por ThinkTom
 
 [简体中文](README.md) | [English](README.en.md) | [Русский](README.ru.md) | [فارسی](README.fa.md) | [Türkçe](README.tr.md) | **Español**
 
