@@ -19,6 +19,7 @@ import { QqApi } from "./qq/client.js";
 import { QqAdapter } from "./adapters/qq/adapter.js";
 import { WeixinApi } from "./adapters/weixin/weixin-api.js";
 import { WeixinAdapter } from "./adapters/weixin/adapter.js";
+import { WeixinMedia } from "./adapters/weixin/weixin-media.js";
 import { WeixinStateStore } from "./adapters/weixin/weixin-state.js";
 import type { ImAdapter } from "./transport/adapter.js";
 import { QqbotApp } from "./gateway.js";
@@ -211,6 +212,8 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
       token: credentials.token,
       state: new WeixinStateStore(path.join(dataDir, "weixin-state.json")),
       logger,
+      media: new WeixinMedia(credentials.baseUrl),
+      mediaRoot: path.join(dataDir, "media"),
       onStaleToken: (reason) => logger.error("weixin token expired, re-scan required", { reason }),
     });
   } else {

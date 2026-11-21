@@ -1,9 +1,63 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { chunkMarkdownText, createNoopLogger } from "@codearts-qqbot/core";
-import type { InboundMessage, Logger, PresentedFile, ReplyTarget } from "@codearts-qqbot/core";
+import type { Attachment, InboundMessage, Logger, PresentedFile, ReplyTarget } from "@codearts-qqbot/core";
 import type { ChannelCapability, ImAdapter } from "../../transport/adapter.js";
 import type { ImMessageHandler, SendKind } from "../../transport/outbound-types.js";
 import { WeixinApi, WeixinApiError, type WeixinMessage } from "./weixin-api.js";
+import { WeixinMedia, type WeixinMediaItem, type WeixinMediaRef } from "./weixin-media.js";
 import type { WeixinStateStore } from "./weixin-state.js";
+
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"]);
+
+function safeSegment(value: string, limit = 64): string {
+  return value.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, limit);
+}
+
+function imageExtFromBytes(buffer: Buffer, filename?: string): string {
+  if (buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    return ".png";
+  }
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return ".jpg";
+  if (buffer.length >= 6 && buffer.subarray(0, 4).toString("ascii") === "GIF8") return ".gif";
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return ".webp";
+  }
+  if (buffer.length >= 2 && buffer[0] === 0x42 && buffer[1] === 0x4d) return ".bmp";
+  return fileExt(filename, ".img");
+}
+
+function fileExt(filename?: string, fallback = ".bin"): string {
+  const ext = path.extname(filename ?? "");
+  return /^\.[A-Za-z0-9]{1,8}$/.test(ext) ? ext.toLowerCase() : fallback;
+}
+
+function mediaRefOf(value: unknown): WeixinMediaRef | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const rec = value as Record<string, unknown>;
+  const out: WeixinMediaRef = {};
+  if (typeof rec["encrypt_query_param"] === "string") out.encrypt_query_param = rec["encrypt_query_param"];
+  if (typeof rec["full_url"] === "string") out.full_url = rec["full_url"];
+  if (typeof rec["aes_key"] === "string") out.aes_key = rec["aes_key"];
+  if (typeof rec["encrypt_type"] === "number") out.encrypt_type = rec["encrypt_type"];
+  return Object.keys(out).length === 0 ? undefined : out;
+}
+
+function toMediaItem(item: unknown, extra: { file_name?: string; len?: string } = {}): WeixinMediaItem | undefined {
+  if (typeof item !== "object" || item === null) return undefined;
+  const rec = item as Record<string, unknown>;
+  const media = mediaRefOf(rec["media"]);
+  if (media === undefined) return undefined;
+  const out: WeixinMediaItem = { media };
+  if (typeof rec["aeskey"] === "string") out.aeskey = rec["aeskey"];
+  if (extra.file_name !== undefined) out.file_name = extra.file_name;
+  if (extra.len !== undefined) out.len = extra.len;
+  return out;
+}
 
 export const WEIXIN_CAPABILITY: ChannelCapability = {
   maxChars: 1800,
@@ -23,6 +77,10 @@ export interface WeixinAdapterOptions {
   maxChars?: number;
   reconnect?: { initialMs: number; maxMs: number };
   onStaleToken?: (reason: string) => void;
+  /** 媒体下载/上传；未提供时媒体能力降级 */
+  media?: WeixinMedia;
+  /** 入站媒体落盘根目录 */
+  mediaRoot?: string;
 }
 
 /**
@@ -106,7 +164,11 @@ export class WeixinAdapter implements ImAdapter {
           buf = updates.getUpdatesBuf;
           await this.options.state.setCursor(buf, this.options.botId).catch(() => undefined);
         }
-        for (const raw of this.order(updates.msgs)) this.dispatch(raw);
+        for (const raw of this.order(updates.msgs)) {
+          void this.dispatch(raw).catch((err) => {
+            this.logger.error("weixin dispatch failed", { err: String(err) });
+          });
+        }
         if (updates.msgs.length === 0) {
           // 服务端提前返回空响应时退避，避免紧循环占满事件循环
           await new Promise((r) => setTimeout(r, 200));
@@ -142,26 +204,88 @@ export class WeixinAdapter implements ImAdapter {
     });
   }
 
-  private dispatch(raw: WeixinMessage): void {
+  private async dispatch(raw: WeixinMessage): Promise<void> {
     const text = this.extractText(raw);
     const from = raw.from_user_id;
-    if (text === undefined || from === undefined || text.trim().length === 0) return;
+    if (from === undefined) return;
 
     if (raw.context_token !== undefined) this.contextTokens.set(from, raw.context_token);
+
+    const messageId = raw.msg_id ?? raw.client_id ?? `weixin-${raw.seq ?? Date.now()}`;
+    const attachments = await this.extractAttachments(raw, messageId, from);
+    const trimmed = text?.trim() ?? "";
+    if (trimmed.length === 0 && attachments.length === 0) return;
 
     const message: InboundMessage = {
       scope: "c2c",
       channel: "weixin",
       peerId: from,
       senderId: from,
-      text,
+      text: text ?? "",
       mentioned: true,
-      messageId: raw.msg_id ?? raw.client_id ?? `weixin-${raw.seq ?? Date.now()}`,
+      messageId,
       timestamp: raw.create_time_ms ?? Date.now(),
+      ...(attachments.length === 0 ? {} : { attachments }),
     };
     void Promise.resolve(this.handler?.(message)).catch((err) => {
       this.logger.error("weixin message handler failed", { err: String(err) });
     });
+  }
+
+  private async extractAttachments(raw: WeixinMessage, messageId: string, from: string): Promise<Attachment[]> {
+    const items = raw.item_list ?? [];
+    const out: Attachment[] = [];
+
+    for (const [index, item] of items.entries()) {
+      if (item.type === 2) {
+        const media = toMediaItem(item.image_item);
+        if (media === undefined) continue;
+        out.push(await this.fetchAttachment(media, "image", undefined, messageId, index, from));
+      } else if (item.type === 4) {
+        const file = item.file_item;
+        const filename = typeof file?.file_name === "string" ? file.file_name : undefined;
+        const len = typeof file?.len === "string" ? file.len : undefined;
+        const media = toMediaItem(file, { ...(filename === undefined ? {} : { file_name: filename }), ...(len === undefined ? {} : { len }) });
+        if (media === undefined) continue;
+        out.push(await this.fetchAttachment(media, "file", filename, messageId, index, from));
+      }
+    }
+    return out;
+  }
+
+  private async fetchAttachment(
+    item: WeixinMediaItem,
+    kind: "image" | "file",
+    filename: string | undefined,
+    messageId: string,
+    index: number,
+    from: string,
+  ): Promise<Attachment> {
+    const sizeHint = Number(item.len ?? "") > 0 ? Number(item.len) : undefined;
+    const base: Attachment = {
+      kind,
+      ...(filename === undefined ? {} : { filename }),
+      ...(sizeHint === undefined ? {} : { size: sizeHint }),
+    };
+
+    if (this.options.media === undefined || this.options.mediaRoot === undefined) return base;
+
+    try {
+      const { buffer, size } = await this.options.media.download(item);
+      if (size > this.capability.maxFileBytes) {
+        this.logger.warn("weixin media exceeds limit", { kind, bytes: size, max: this.capability.maxFileBytes });
+        return { ...base, size };
+      }
+      const ext = kind === "image" ? imageExtFromBytes(buffer, filename) : fileExt(filename);
+      const dir = path.join(this.options.mediaRoot, safeSegment(from));
+      mkdirSync(dir, { recursive: true });
+      const file = path.join(dir, `${safeSegment(messageId, 48)}-${index}${ext}`);
+      writeFileSync(file, buffer, { mode: 0o600 });
+      return { ...base, localPath: file, size };
+    } catch (err) {
+      this.logger.warn("weixin media download failed", { kind, err: String(err) });
+      return base;
+    }
   }
 
   private extractText(raw: WeixinMessage): string | undefined {
@@ -180,9 +304,29 @@ export class WeixinAdapter implements ImAdapter {
   }
 
   async sendFile(target: ReplyTarget, files: PresentedFile[]): Promise<void> {
-    // PR-3 实现 CDN 上传；当前降级为路径文本，避免静默丢文件
+    const media = this.options.media;
+    if (media === undefined) {
+      for (const file of files) {
+        await this.sendText(target, `文件：${file.name}\n${file.path}`, "file");
+      }
+      return;
+    }
+
+    const contextToken = this.contextTokens.get(target.targetId);
     for (const file of files) {
-      await this.sendText(target, `文件：${file.name}\n${file.path}`, "file");
+      const size = file.size ?? 0;
+      if (size > this.capability.maxFileBytes) {
+        await this.sendText(target, `文件过大（${size} 字节），请从工作区获取：${file.path}`, "file");
+        continue;
+      }
+      const kind: "image" | "file" = IMAGE_EXTENSIONS.has(fileExt(file.name, "")) ? "image" : "file";
+      try {
+        const uploaded = await media.upload(this.options.token, target.targetId, file.path, kind);
+        await media.sendMedia(this.options.token, target.targetId, uploaded.item, contextToken);
+      } catch (err) {
+        this.logger.warn("weixin sendFile failed", { name: file.name, err: String(err) });
+        await this.sendText(target, `文件：${file.name}\n${file.path}`, "file");
+      }
     }
   }
 
