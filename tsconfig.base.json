@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@codearts-qqbot/core": ["packages/qqbot-core/src/index.ts"],
+      "@codearts-qqbot/ipc": ["packages/qqbot-ipc/src/index.ts"],
+      "@codearts-qqbot/kernel-port": ["packages/qqbot-kernel-port/src/index.ts"],
+      "@codearts-qqbot/runtime": ["packages/qqbot-runtime/src/index.ts"]
+    }
+  }
+}
