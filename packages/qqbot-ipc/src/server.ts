@@ -6,14 +6,14 @@ import {
   type AccessMutationResult,
   type AccessSnapshot,
   type KernelConnection,
-  type QqCredentials,
+  type ChannelCredentials,
   type RpcMessage,
 } from "./protocol.js";
 
 export interface IpcServerHandlers {
   kernelGet(): KernelConnection | undefined;
   onKernelSet?(connection: KernelConnection): void | Promise<void>;
-  onCredentialsSet?(credentials: QqCredentials): void | Promise<void>;
+  onCredentialsSet?(credentials: ChannelCredentials): void | Promise<void>;
   accessGet?(): AccessSnapshot | Promise<AccessSnapshot>;
   accessMutate?(action: AccessAction): AccessMutationResult | Promise<AccessMutationResult>;
   statusGet?(): unknown;
@@ -153,8 +153,15 @@ export class IpcServer {
         }
 
         case "credentials.set": {
-          const creds = message.params as QqCredentials | undefined;
-          if (creds === undefined || typeof creds.appId !== "string" || typeof creds.appSecret !== "string") {
+          const creds = message.params as ChannelCredentials | undefined;
+          const valid =
+            creds !== undefined &&
+            (creds.channel === "weixin"
+              ? typeof creds.botId === "string" &&
+                typeof creds.token === "string" &&
+                typeof creds.baseUrl === "string"
+              : typeof creds.appId === "string" && typeof creds.appSecret === "string");
+          if (!valid) {
             this.reply(conn, message.id, undefined, { code: 400, message: "invalid credentials" });
             return;
           }

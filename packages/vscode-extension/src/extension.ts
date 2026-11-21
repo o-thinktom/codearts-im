@@ -7,6 +7,7 @@ import { discoverKernel } from "./kernel-discovery.js";
 import { decryptKernelSecret } from "./kernel-secret.js";
 import { SidecarSupervisor, type SidecarStatus } from "./sidecar.js";
 import { showBindPanel } from "./bind-panel.js";
+import { showWeixinBindPanel } from "./weixin-bind-panel.js";
 
 let supervisor: SidecarSupervisor | undefined;
 let bridge: KernelBridge | undefined;
@@ -100,13 +101,26 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
     ...(password === undefined ? {} : { basicAuth: { username, password } }),
   };
 
-  const appId = await context.secrets.get("qqbot/app-id");
-  const appSecret = await context.secrets.get("qqbot/app-secret");
-  if (appId !== undefined && appSecret !== undefined) {
-    const okCreds = await bridge.pushCredentials({ appId, appSecret });
-    if (!okCreds) log("[qqbot] QQ 凭据下发失败");
+  const channel = (await context.secrets.get("im/channel")) ?? "qq";
+  if (channel === "weixin") {
+    const botId = await context.secrets.get("weixin/bot-id");
+    const token = await context.secrets.get("weixin/token");
+    const baseUrl = await context.secrets.get("weixin/base-url");
+    if (botId !== undefined && token !== undefined && baseUrl !== undefined) {
+      const okCreds = await bridge.pushCredentials({ channel: "weixin", botId, token, baseUrl });
+      if (!okCreds) log("[qqbot] 微信凭据下发失败");
+    } else {
+      log("[qqbot] 尚未绑定微信凭据，sidecar 会等待（执行「QQ Bot: 扫码绑定微信」）");
+    }
   } else {
-    log("[qqbot] 尚未绑定 QQ 凭据，sidecar 会等待（执行「QQ Bot: 绑定账号」）");
+    const appId = await context.secrets.get("qqbot/app-id");
+    const appSecret = await context.secrets.get("qqbot/app-secret");
+    if (appId !== undefined && appSecret !== undefined) {
+      const okCreds = await bridge.pushCredentials({ channel: "qq", appId, appSecret });
+      if (!okCreds) log("[qqbot] QQ 凭据下发失败");
+    } else {
+      log("[qqbot] 尚未绑定 QQ 凭据，sidecar 会等待（执行「QQ Bot: 绑定账号」）");
+    }
   }
 
   const pushed = await bridge.pushKernel(connection);
@@ -170,8 +184,27 @@ export function activate(context: vscode.ExtensionContext): void {
         onBound: async ({ appId, appSecret }) => {
           await context.secrets.store("qqbot/app-id", appId);
           await context.secrets.store("qqbot/app-secret", appSecret);
+          await context.secrets.store("im/channel", "qq");
           log(`[qqbot] 扫码绑定成功 app=${appId.slice(0, 4)}***`);
           vscode.window.showInformationMessage("扫码绑定成功，正在启动 QQ Bot");
+          sup.restart();
+          await syncKernelConnection(context);
+        },
+        onManual: () => {
+          void vscode.commands.executeCommand("codeartsQqbot.bindManual");
+        },
+      });
+      context.subscriptions.push(panel);
+    }),
+    vscode.commands.registerCommand("codeartsQqbot.bindWeixin", () => {
+      const panel = showWeixinBindPanel({
+        onBound: async ({ botId, token, baseUrl }) => {
+          await context.secrets.store("weixin/bot-id", botId);
+          await context.secrets.store("weixin/token", token);
+          await context.secrets.store("weixin/base-url", baseUrl);
+          await context.secrets.store("im/channel", "weixin");
+          log(`[qqbot] 微信扫码绑定成功 bot=${botId.slice(0, 6)}***`);
+          vscode.window.showInformationMessage("微信绑定成功，正在启动连接");
           sup.restart();
           await syncKernelConnection(context);
         },
@@ -201,6 +234,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
       await context.secrets.store("qqbot/app-id", appId.trim());
       await context.secrets.store("qqbot/app-secret", secret.trim());
+      await context.secrets.store("im/channel", "qq");
       log(`[qqbot] credentials stored for app ${appId.trim().slice(0, 4)}***`);
       vscode.window.showInformationMessage("凭据已保存，正在启动 QQ Bot");
       sup.restart();

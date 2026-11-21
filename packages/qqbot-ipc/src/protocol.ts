@@ -21,6 +21,17 @@ export interface QqCredentials {
   appSecret: string;
 }
 
+/** 微信 iLink 凭据 */
+export interface WeixinCredentials {
+  botId: string;
+  token: string;
+  baseUrl: string;
+}
+
+export type ChannelCredentials =
+  | ({ channel?: "qq" } & QqCredentials)
+  | ({ channel: "weixin" } & WeixinCredentials);
+
 export type AccessKind = "c2c" | "group" | "command";
 export type AccessMode = "open" | "allowlist" | "disabled";
 

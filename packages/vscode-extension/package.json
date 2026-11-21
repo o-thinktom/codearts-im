@@ -43,6 +43,10 @@
         "title": "QQ Bot: 扫码绑定机器人"
       },
       {
+        "command": "codeartsQqbot.bindWeixin",
+        "title": "QQ Bot: 扫码绑定微信"
+      },
+      {
         "command": "codeartsQqbot.bindManual",
         "title": "QQ Bot: 手动填写凭据"
       },

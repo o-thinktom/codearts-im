@@ -8,8 +8,8 @@ import {
   type AccessAction,
   type AccessMutationResult,
   type AccessSnapshot,
+  type ChannelCredentials,
   type KernelConnection,
-  type QqCredentials,
 } from "@codearts-qqbot/ipc";
 import { HttpKernelPort, type KernelPort } from "@codearts-qqbot/kernel-port";
 import { FileAccessStore } from "./access/store.js";
@@ -17,6 +17,10 @@ import { MediaService } from "./media/service.js";
 import { acquireInstanceLock, type InstanceLock } from "./ops/single-instance.js";
 import { QqApi } from "./qq/client.js";
 import { QqAdapter } from "./adapters/qq/adapter.js";
+import { WeixinApi } from "./adapters/weixin/weixin-api.js";
+import { WeixinAdapter } from "./adapters/weixin/adapter.js";
+import { WeixinStateStore } from "./adapters/weixin/weixin-state.js";
+import type { ImAdapter } from "./transport/adapter.js";
 import { QqbotApp } from "./gateway.js";
 import { FilePrefsStore, SessionRegistry } from "./session/registry.js";
 import { normalizeConfig } from "./config.js";
@@ -38,7 +42,7 @@ export interface SidecarHandle {
 }
 
 interface Pending {
-  credentials?: QqCredentials;
+  credentials?: ChannelCredentials;
   kernel?: KernelConnection;
 }
 
@@ -103,7 +107,7 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
   const pending: Pending = {
     ...(options.appId === undefined || options.appSecret === undefined
       ? {}
-      : { credentials: { appId: options.appId, appSecret: options.appSecret } }),
+      : { credentials: { channel: "qq", appId: options.appId, appSecret: options.appSecret } }),
   };
 
   let resolveReady: (() => void) | undefined;
@@ -134,7 +138,12 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
       },
       onCredentialsSet: (credentials) => {
         pending.credentials = credentials;
-        logger.info("qq credentials received", { appId: credentials.appId.slice(0, 4) + "***" });
+        const channel = credentials.channel ?? "qq";
+        const label =
+          credentials.channel === "weixin"
+            ? `weixin bot ${credentials.botId.slice(0, 6)}***`
+            : `qq app ${credentials.appId.slice(0, 4)}***`;
+        logger.info("channel credentials received", { channel, target: label });
         maybeStart();
       },
       accessGet: () => toSnapshot(),
@@ -182,30 +191,48 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
     throw new Error(`kernel unhealthy at ${connection.baseUrl} (auth/endpoint)`);
   }
 
-  const lock: InstanceLock | undefined = acquireInstanceLock(path.join(dataDir, "locks"), `app-${credentials.appId}`);
+  const channel = credentials.channel ?? "qq";
+  const sessionAppId = credentials.channel === "weixin" ? credentials.botId : credentials.appId;
+
+  const lock: InstanceLock | undefined = acquireInstanceLock(
+    path.join(dataDir, "locks"),
+    `${channel}-${sessionAppId}`,
+  );
   if (lock === undefined) {
     await ipc.close();
-    throw new Error(`another sidecar instance is already running for appId ${credentials.appId}`);
+    throw new Error(`another sidecar instance is already running for ${channel}:${sessionAppId}`);
   }
 
-  const api = new QqApi({ appId: credentials.appId, appSecret: credentials.appSecret, logger });
-  const adapter = new QqAdapter({
-    api,
-    logger,
-    allowedRoots: [options.workspace, path.join(dataDir, "media")],
-    maxFileBytes: 20 * 1024 * 1024,
-  });
+  let adapter: ImAdapter;
+  if (credentials.channel === "weixin") {
+    adapter = new WeixinAdapter({
+      api: new WeixinApi({ baseUrl: credentials.baseUrl }),
+      botId: credentials.botId,
+      token: credentials.token,
+      state: new WeixinStateStore(path.join(dataDir, "weixin-state.json")),
+      logger,
+      onStaleToken: (reason) => logger.error("weixin token expired, re-scan required", { reason }),
+    });
+  } else {
+    adapter = new QqAdapter({
+      api: new QqApi({ appId: credentials.appId, appSecret: credentials.appSecret, logger }),
+      logger,
+      allowedRoots: [options.workspace, path.join(dataDir, "media")],
+      maxFileBytes: 20 * 1024 * 1024,
+    });
+  }
+
   const registry = new SessionRegistry({
     port: kernel,
-    channel: "qq",
-    prefs: new FilePrefsStore(path.join(dataDir, "prefs.json"), credentials.appId),
-    appId: credentials.appId,
+    channel: adapter.id,
+    prefs: new FilePrefsStore(path.join(dataDir, "prefs.json"), sessionAppId),
+    appId: sessionAppId,
     workspace: options.workspace,
     logger,
   });
 
   const config = normalizeConfig({
-    appId: credentials.appId,
+    appId: sessionAppId,
     workspace: options.workspace,
     access: { c2cMode: "open", groupMode: "open", commandMode: "open" },
     media: {

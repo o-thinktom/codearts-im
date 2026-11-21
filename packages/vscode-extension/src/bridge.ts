@@ -4,8 +4,8 @@ import {
   type AccessAction,
   type AccessMutationResult,
   type AccessSnapshot,
+  type ChannelCredentials,
   type KernelConnection,
-  type QqCredentials,
 } from "@codearts-qqbot/ipc";
 
 export interface BridgeOptions {
@@ -93,14 +93,18 @@ export class KernelBridge implements vscode.Disposable {
     }
   }
 
-  async pushCredentials(credentials: QqCredentials): Promise<boolean> {
+  async pushCredentials(credentials: ChannelCredentials): Promise<boolean> {
     if (this.client === undefined || !this.client.connected) {
       const ok = await this.connect();
       if (!ok || this.client === undefined) return false;
     }
     try {
       await this.client.request("credentials.set", credentials);
-      this.options.log(`[qqbot] QQ credentials pushed for app ${credentials.appId.slice(0, 4)}***`);
+      const label =
+        credentials.channel === "weixin"
+          ? `weixin bot ${credentials.botId.slice(0, 6)}***`
+          : `app ${credentials.appId.slice(0, 4)}***`;
+      this.options.log(`[qqbot] credentials pushed for ${label}`);
       return true;
     } catch (err) {
       this.options.log(`[qqbot] credentials push failed: ${err instanceof Error ? err.message : String(err)}`);
