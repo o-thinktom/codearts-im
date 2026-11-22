@@ -128,6 +128,10 @@ export class KernelBridge implements vscode.Disposable {
     return this.call<WecomQrPollResult>("wecom.qr.poll", { scode });
   }
 
+  async logTail(lines = 200): Promise<string[]> {
+    return (await this.call<string[]>("log.tail", { lines })) ?? [];
+  }
+
   async accessMutate(action: AccessAction): Promise<AccessMutationResult | undefined> {
     return this.call<AccessMutationResult>("access.mutate", action);
   }

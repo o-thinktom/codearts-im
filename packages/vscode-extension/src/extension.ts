@@ -473,30 +473,84 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand("codeartsQqbot.exportDiagnostics", async () => {
       const folder = vscode.workspace.workspaceFolders?.[0]?.uri;
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+$/, "").replace("T", "-");
+      const name = `qqbot-diagnostics-${stamp}.txt`;
       const target = await vscode.window.showSaveDialog({
-        defaultUri:
-          folder === undefined
-            ? vscode.Uri.file("qqbot-diagnostics.txt")
-            : vscode.Uri.joinPath(folder, "qqbot-diagnostics.txt"),
+        defaultUri: folder === undefined ? vscode.Uri.file(name) : vscode.Uri.joinPath(folder, name),
         filters: { Text: ["txt"] },
       });
       if (target === undefined) return;
 
       const status = sup.status;
       const discovered = discoverKernel();
-      const content = [
-        "# CodeArts QQ Bot 诊断",
+      const config = vscode.workspace.getConfiguration("codeartsQqbot");
+
+      let sidecarStatus: Record<string, unknown> | undefined;
+      try {
+        sidecarStatus = (await bridge?.status()) as Record<string, unknown> | undefined;
+      } catch {
+        sidecarStatus = undefined;
+      }
+      const logs = (await bridge?.logTail(300).catch(() => [])) ?? [];
+
+      let pipeExists = false;
+      try {
+        pipeExists = fs.existsSync(pipePath);
+      } catch {
+        pipeExists = false;
+      }
+
+      const passwordSet = ((): string => {
+        try {
+          return config.get<string>("kernel.password") === undefined ? "empty" : "set";
+        } catch {
+          return "unknown";
+        }
+      })();
+
+      const errors = logs.filter((line) => /"level":"(error|warn)"/.test(line)).length;
+      const sections = [
+        "# CodeArts QQ Bot 诊断包",
         `generatedAt=${new Date().toISOString()}`,
-        `sidecar=${status.state}`,
-        `restarts=${status.restarts}`,
-        `ipc=${bridge?.connected === true ? "connected" : "disconnected"}`,
-        `kernelBaseUrl=${discovered?.baseUrl ?? "unknown"}`,
-        `kernelVersion=${discovered?.version ?? "unknown"}`,
+        "",
+        "## 扩展进程",
         `vscode=${vscode.version}`,
         `platform=${process.platform}-${process.arch}`,
-      ].join("\n");
-      await vscode.workspace.fs.writeFile(target, Buffer.from(content, "utf8"));
-      vscode.window.showInformationMessage("诊断包已导出（不含凭据）");
+        `extension=${context.extensionPath}`,
+        `secretSource=${kernelSecretSource}`,
+        "",
+        "## sidecar（扩展侧）",
+        `state=${status.state}`,
+        `detail=${status.detail ?? ""}`,
+        `restarts=${status.restarts}`,
+        `pid=${sup.pid ?? "unknown"}`,
+        `binary=${sup.binaryPath ?? "not found"}`,
+        `pipe=${pipePath}`,
+        `pipeExists=${pipeExists}`,
+        `ipc=${bridge?.connected === true ? "connected" : "disconnected"}`,
+        "",
+        "## sidecar（进程侧）",
+        sidecarStatus === undefined ? "(IPC 未连接，无进程内快照)" : JSON.stringify(sidecarStatus, null, 2),
+        "",
+        "## 内核",
+        `baseUrl=${discovered?.baseUrl ?? "unknown"}`,
+        `version=${discovered?.version ?? "unknown"}`,
+        "",
+        "## 配置快照（脱敏）",
+        `enabled=${String(config.get("enabled", false))}`,
+        `debug=${String(config.get("debug", false))}`,
+        `sidecarPath=${String(config.get("sidecarPath") ?? "")}`,
+        `kernel.username=${String(config.get("kernel.username") ?? "")}`,
+        `kernel.password=${passwordSet}`,
+        `provider=${String(config.get("provider") ?? "")}`,
+        `model=${String(config.get("model") ?? "")}`,
+        `agent=${String(config.get("agent") ?? "")}`,
+        "",
+        `## sidecar 日志（最近 ${logs.length} 行，warn/error ${errors} 条）`,
+        logs.length === 0 ? "(无日志；可能 sidecar 未启动或尚未落盘)" : logs.join("\n"),
+      ];
+      await vscode.workspace.fs.writeFile(target, Buffer.from(sections.join("\n"), "utf8"));
+      vscode.window.showInformationMessage(`诊断包已导出：${target.fsPath}（不含凭据）`);
     }),
   );
 

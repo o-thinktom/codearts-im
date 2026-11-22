@@ -49,6 +49,10 @@ export class SidecarSupervisor {
     return this.resolveBinary();
   }
 
+  get pid(): number | undefined {
+    return this.child?.pid;
+  }
+
   private resolveBinary(): string | undefined {
     const configured = vscode.workspace.getConfiguration("codeartsQqbot").get<string>("sidecarPath");
     if (typeof configured === "string" && configured.length > 0) return configured;

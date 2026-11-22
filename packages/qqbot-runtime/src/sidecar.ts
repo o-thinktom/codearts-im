@@ -29,6 +29,7 @@ import type { ImAdapter } from "./transport/adapter.js";
 import { QqbotApp } from "./gateway.js";
 import { FilePrefsStore, SessionRegistry } from "./session/registry.js";
 import { normalizeConfig } from "./config.js";
+import { createFileLogger, readLogTail, teeLogger } from "./ops/file-logger.js";
 
 export interface SidecarOptions {
   ipcPath?: string;
@@ -64,10 +65,15 @@ function dataDirOf(): string {
  * 访问名单与会话映射持久化在 CODEARTS_QQBOT_DATA，重启后可恢复。
  */
 export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle> {
-  const logger = options.logger ?? createConsoleLogger(process.env.QQBOT_DEBUG === "1" ? "debug" : "info");
   const ipcPath = options.ipcPath ?? defaultIpcPath("vscode");
   const waitMs = options.waitMs ?? 60000;
   const dataDir = dataDirOf();
+  const logDir = path.join(dataDir, "logs");
+  const startedAt = Date.now();
+  const logger = teeLogger(
+    options.logger ?? createConsoleLogger(process.env.QQBOT_DEBUG === "1" ? "debug" : "info"),
+    createFileLogger(logDir),
+  );
 
   const access = new AccessController(new FileAccessStore(path.join(dataDir, "access.json")));
 
@@ -161,7 +167,16 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
       accessMutate: (action) => applyAction(action),
       wecomQrStart: () => wecomQr.start(),
       wecomQrPoll: (scode) => wecomQr.poll({ scode }),
-      statusGet: () => ({ online, channel: channelRef, kernel: pending.kernel?.baseUrl ?? null }),
+      logTail: (lines) => readLogTail(logDir, lines),
+      statusGet: () => ({
+        online,
+        channel: channelRef,
+        pid: process.pid,
+        uptimeMs: Date.now() - startedAt,
+        dataDir,
+        logDir,
+        kernel: pending.kernel?.baseUrl ?? null,
+      }),
     },
   });
 

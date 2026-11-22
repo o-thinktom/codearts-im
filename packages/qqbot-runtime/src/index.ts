@@ -8,6 +8,7 @@ export * from "./adapters/wecom/adapter.js";
 export * from "./adapters/wecom/wecom-auth.js";
 export * from "./security/credentials.js";
 export * from "./ops/health.js";
+export * from "./ops/file-logger.js";
 export * from "./config.js";
 export * from "./gateway.js";
 export * from "./qq/client.js";
