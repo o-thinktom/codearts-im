@@ -6,6 +6,8 @@ import {
   type AccessSnapshot,
   type ChannelCredentials,
   type KernelConnection,
+  type WecomQrTicket,
+  type WecomQrPollResult,
 } from "@codearts-qqbot/ipc";
 
 export interface BridgeOptions {
@@ -103,7 +105,9 @@ export class KernelBridge implements vscode.Disposable {
       const label =
         credentials.channel === "weixin"
           ? `weixin bot ${credentials.botId.slice(0, 6)}***`
-          : `app ${credentials.appId.slice(0, 4)}***`;
+          : credentials.channel === "wecom"
+            ? `wecom bot ${credentials.botId.slice(0, 6)}***`
+            : `app ${credentials.appId.slice(0, 4)}***`;
       this.options.log(`[qqbot] credentials pushed for ${label}`);
       return true;
     } catch (err) {
@@ -114,6 +118,14 @@ export class KernelBridge implements vscode.Disposable {
 
   async accessGet(): Promise<AccessSnapshot | undefined> {
     return this.call<AccessSnapshot>("access.get");
+  }
+
+  async wecomQrStart(): Promise<WecomQrTicket | undefined> {
+    return this.call<WecomQrTicket>("wecom.qr.start");
+  }
+
+  async wecomQrPoll(scode: string): Promise<WecomQrPollResult | undefined> {
+    return this.call<WecomQrPollResult>("wecom.qr.poll", { scode });
   }
 
   async accessMutate(action: AccessAction): Promise<AccessMutationResult | undefined> {

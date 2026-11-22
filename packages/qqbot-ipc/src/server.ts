@@ -7,6 +7,8 @@ import {
   type AccessSnapshot,
   type KernelConnection,
   type ChannelCredentials,
+  type WecomQrTicket,
+  type WecomQrPollResult,
   type RpcMessage,
 } from "./protocol.js";
 
@@ -14,6 +16,8 @@ export interface IpcServerHandlers {
   kernelGet(): KernelConnection | undefined;
   onKernelSet?(connection: KernelConnection): void | Promise<void>;
   onCredentialsSet?(credentials: ChannelCredentials): void | Promise<void>;
+  wecomQrStart?(): WecomQrTicket | Promise<WecomQrTicket>;
+  wecomQrPoll?(scode: string): WecomQrPollResult | Promise<WecomQrPollResult>;
   accessGet?(): AccessSnapshot | Promise<AccessSnapshot>;
   accessMutate?(action: AccessAction): AccessMutationResult | Promise<AccessMutationResult>;
   statusGet?(): unknown;
@@ -160,7 +164,9 @@ export class IpcServer {
               ? typeof creds.botId === "string" &&
                 typeof creds.token === "string" &&
                 typeof creds.baseUrl === "string"
-              : typeof creds.appId === "string" && typeof creds.appSecret === "string");
+              : creds.channel === "wecom"
+                ? typeof creds.botId === "string" && typeof creds.secret === "string"
+                : typeof creds.appId === "string" && typeof creds.appSecret === "string");
           if (!valid) {
             this.reply(conn, message.id, undefined, { code: 400, message: "invalid credentials" });
             return;
@@ -173,6 +179,26 @@ export class IpcServer {
         case "log.tail": {
           const params = message.params as { lines?: number } | undefined;
           this.reply(conn, message.id, this.options.handlers.logTail?.(params?.lines ?? 100) ?? []);
+          return;
+        }
+
+        case "wecom.qr.start": {
+          if (this.options.handlers.wecomQrStart === undefined) {
+            this.reply(conn, message.id, undefined, { code: 501, message: "wecom qr not supported" });
+            return;
+          }
+          this.reply(conn, message.id, await this.options.handlers.wecomQrStart());
+          return;
+        }
+
+        case "wecom.qr.poll": {
+          const params = message.params as { scode?: unknown } | undefined;
+          const scode = typeof params?.scode === "string" ? params.scode : undefined;
+          if (scode === undefined || this.options.handlers.wecomQrPoll === undefined) {
+            this.reply(conn, message.id, undefined, { code: 400, message: "invalid scode" });
+            return;
+          }
+          this.reply(conn, message.id, await this.options.handlers.wecomQrPoll(scode));
           return;
         }
 

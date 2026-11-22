@@ -47,6 +47,10 @@
         "title": "QQ Bot: 扫码绑定微信"
       },
       {
+        "command": "codeartsQqbot.bindWecom",
+        "title": "QQ Bot: 扫码绑定企业微信"
+      },
+      {
         "command": "codeartsQqbot.bindManual",
         "title": "QQ Bot: 手动填写凭据"
       },

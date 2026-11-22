@@ -8,6 +8,7 @@ import { decryptKernelSecret } from "./kernel-secret.js";
 import { SidecarSupervisor, type SidecarStatus } from "./sidecar.js";
 import { showBindPanel } from "./bind-panel.js";
 import { showWeixinBindPanel } from "./weixin-bind-panel.js";
+import { showWecomBindPanel } from "./wecom-bind-panel.js";
 
 let supervisor: SidecarSupervisor | undefined;
 let bridge: KernelBridge | undefined;
@@ -111,6 +112,15 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
       if (!okCreds) log("[qqbot] 微信凭据下发失败");
     } else {
       log("[qqbot] 尚未绑定微信凭据，sidecar 会等待（执行「QQ Bot: 扫码绑定微信」）");
+    }
+  } else if (channel === "wecom") {
+    const botId = await context.secrets.get("wecom/bot-id");
+    const secret = await context.secrets.get("wecom/secret");
+    if (botId !== undefined && secret !== undefined) {
+      const okCreds = await bridge.pushCredentials({ channel: "wecom", botId, secret });
+      if (!okCreds) log("[qqbot] 企业微信凭据下发失败");
+    } else {
+      log("[qqbot] 尚未绑定企业微信凭据，sidecar 会等待（执行「QQ Bot: 扫码绑定企业微信」）");
     }
   } else {
     const appId = await context.secrets.get("qqbot/app-id");
@@ -220,6 +230,33 @@ export function activate(context: vscode.ExtensionContext): void {
         },
         onManual: () => {
           void vscode.commands.executeCommand("codeartsQqbot.bindManual");
+        },
+        waitForOnline,
+      });
+      context.subscriptions.push(panel);
+    }),
+    vscode.commands.registerCommand("codeartsQqbot.bindWecom", () => {
+      const waitForOnline = async (timeoutMs: number): Promise<boolean> => {
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+          const status = (await bridge?.status()) as { online?: boolean } | undefined;
+          if (status?.online === true) return true;
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+        return false;
+      };
+
+      const panel = showWecomBindPanel({
+        startQr: async () => (await bridge?.wecomQrStart()) ?? undefined,
+        pollQr: async (scode) => (await bridge?.wecomQrPoll(scode)) ?? undefined,
+        onBound: async ({ botId, secret }) => {
+          await context.secrets.store("wecom/bot-id", botId);
+          await context.secrets.store("wecom/secret", secret);
+          await context.secrets.store("im/channel", "wecom");
+          log(`[qqbot] 企业微信扫码绑定成功 bot=${botId.slice(0, 6)}***`);
+          vscode.window.showInformationMessage("企业微信绑定成功，正在启动连接");
+          sup.restart();
+          await syncKernelConnection(context);
         },
         waitForOnline,
       });

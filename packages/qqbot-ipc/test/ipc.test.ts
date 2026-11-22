@@ -14,6 +14,10 @@ function pipePath(): string {
 async function startServer(overrides?: {
   token?: string;
   onKernelSet?: (c: KernelConnection) => void;
+  wecom?: {
+    start: () => import("../src/index.js").WecomQrTicket;
+    poll: (scode: string) => import("../src/index.js").WecomQrPollResult;
+  };
 }): Promise<{ server: IpcServer; token: string; received: KernelConnection[] }> {
   const token = overrides?.token ?? "token-123";
   const received: KernelConnection[] = [];
@@ -29,6 +33,9 @@ async function startServer(overrides?: {
         overrides?.onKernelSet?.(c);
       },
       statusGet: () => ({ online: true }),
+      ...(overrides?.wecom === undefined
+        ? {}
+        : { wecomQrStart: overrides.wecom.start, wecomQrPoll: overrides.wecom.poll }),
     },
   });
   await s.start();
@@ -88,6 +95,39 @@ describe("IPC 传输", () => {
     const client = await connect("token-123");
     await client.authenticate();
     await expect(client.request("nope")).rejects.toThrow(/unknown method/);
+  });
+
+  it("转发企业微信扫码票据与轮询结果", async () => {
+    const ticket = {
+      scode: "sc-1",
+      verificationUrl: "https://work.weixin.qq.com/ai/qc/verify?code=x",
+      expiresAt: 1_000,
+      pollIntervalMs: 3_000,
+    };
+    const polled: string[] = [];
+    await startServer({
+      wecom: {
+        start: () => ticket,
+        poll: (scode) => {
+          polled.push(scode);
+          return scode === "sc-1" ? { status: "waiting" } : { status: "failed" };
+        },
+      },
+    });
+    const client = await connect("token-123");
+    await client.authenticate();
+
+    expect(await client.request("wecom.qr.start")).toEqual(ticket);
+    expect(await client.request("wecom.qr.poll", { scode: "sc-1" })).toEqual({ status: "waiting" });
+    expect(polled).toEqual(["sc-1"]);
+  });
+
+  it("未配置企微扫码时返回 501", async () => {
+    await startServer();
+    const client = await connect("token-123");
+    await client.authenticate();
+    await expect(client.request("wecom.qr.start")).rejects.toThrow(/not supported/);
+    await expect(client.request("wecom.qr.poll", { scode: "s" })).rejects.toThrow(/invalid scode/);
   });
 
   it("服务端断开时客户端触发 close 事件", async () => {

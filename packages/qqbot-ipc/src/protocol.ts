@@ -28,9 +28,30 @@ export interface WeixinCredentials {
   baseUrl: string;
 }
 
+/** 企业微信智能机器人凭据（扫码授权获得） */
+export interface WecomCredentials {
+  botId: string;
+  secret: string;
+}
+
 export type ChannelCredentials =
   | ({ channel?: "qq" } & QqCredentials)
-  | ({ channel: "weixin" } & WeixinCredentials);
+  | ({ channel: "weixin" } & WeixinCredentials)
+  | ({ channel: "wecom" } & WecomCredentials);
+
+/** 企微扫码票据：由 sidecar 生成，扩展侧渲染二维码并轮询 */
+export interface WecomQrTicket {
+  scode: string;
+  verificationUrl: string;
+  expiresAt: number;
+  pollIntervalMs: number;
+}
+
+export type WecomQrPollResult =
+  | { status: "waiting" }
+  | { status: "expired" }
+  | { status: "failed" }
+  | { status: "success"; botId: string; secret: string };
 
 export type AccessKind = "c2c" | "group" | "command";
 export type AccessMode = "open" | "allowlist" | "disabled";
@@ -67,6 +88,8 @@ export const IpcMethod = {
   kernelGet: "kernel.get",
   kernelSet: "kernel.set",
   credentialsSet: "credentials.set",
+  wecomQrStart: "wecom.qr.start",
+  wecomQrPoll: "wecom.qr.poll",
   statusGet: "status.get",
   statusChanged: "status.changed",
   logTail: "log.tail",

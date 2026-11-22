@@ -4,6 +4,8 @@ export * from "./transport/adapter.js";
 export * from "./transport/outbound.js";
 export * from "./transport/outbound-types.js";
 export * from "./adapters/qq/adapter.js";
+export * from "./adapters/wecom/adapter.js";
+export * from "./adapters/wecom/wecom-auth.js";
 export * from "./security/credentials.js";
 export * from "./ops/health.js";
 export * from "./config.js";

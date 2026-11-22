@@ -21,6 +21,10 @@ import { WeixinApi } from "./adapters/weixin/weixin-api.js";
 import { WeixinAdapter } from "./adapters/weixin/adapter.js";
 import { WeixinMedia } from "./adapters/weixin/weixin-media.js";
 import { WeixinStateStore } from "./adapters/weixin/weixin-state.js";
+import { WSClient } from "@wecom/aibot-node-sdk";
+import { WecomAdapter } from "./adapters/wecom/adapter.js";
+import type { WecomClient } from "./adapters/wecom/adapter.js";
+import { WecomQrAuth } from "./adapters/wecom/wecom-auth.js";
 import type { ImAdapter } from "./transport/adapter.js";
 import { QqbotApp } from "./gateway.js";
 import { FilePrefsStore, SessionRegistry } from "./session/registry.js";
@@ -126,6 +130,8 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
     }
   };
 
+  const wecomQr = new WecomQrAuth({ source: "codearts-agent" });
+
   const ipc = new IpcServer({
     path: ipcPath,
     token: options.ipcToken,
@@ -145,12 +151,16 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
         const label =
           credentials.channel === "weixin"
             ? `weixin bot ${credentials.botId.slice(0, 6)}***`
-            : `qq app ${credentials.appId.slice(0, 4)}***`;
+            : credentials.channel === "wecom"
+              ? `wecom bot ${credentials.botId.slice(0, 6)}***`
+              : `qq app ${credentials.appId.slice(0, 4)}***`;
         logger.info("channel credentials received", { channel, target: label });
         maybeStart();
       },
       accessGet: () => toSnapshot(),
       accessMutate: (action) => applyAction(action),
+      wecomQrStart: () => wecomQr.start(),
+      wecomQrPoll: (scode) => wecomQr.poll({ scode }),
       statusGet: () => ({ online, channel: channelRef, kernel: pending.kernel?.baseUrl ?? null }),
     },
   });
@@ -196,7 +206,8 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
 
   const channel = credentials.channel ?? "qq";
   channelRef = channel;
-  const sessionAppId = credentials.channel === "weixin" ? credentials.botId : credentials.appId;
+  const sessionAppId =
+    credentials.channel === "weixin" || credentials.channel === "wecom" ? credentials.botId : credentials.appId;
 
   const lock: InstanceLock | undefined = acquireInstanceLock(
     path.join(dataDir, "locks"),
@@ -219,6 +230,15 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
       mediaRoot: path.join(dataDir, "media"),
       workspace: options.workspace,
       onStaleToken: (reason) => logger.error("weixin token expired, re-scan required", { reason }),
+    });
+  } else if (credentials.channel === "wecom") {
+    adapter = new WecomAdapter({
+      // 官方 SDK 的事件签名是强类型的，适配层只依赖最小客户端面
+      client: new WSClient({ botId: credentials.botId, secret: credentials.secret }) as unknown as WecomClient,
+      logger,
+      mediaRoot: path.join(dataDir, "media"),
+      workspace: options.workspace,
+      onStaleCredential: (reason) => logger.error("wecom credential rejected, re-scan required", { reason }),
     });
   } else {
     adapter = new QqAdapter({

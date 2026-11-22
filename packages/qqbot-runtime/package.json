@@ -11,7 +11,8 @@
   "dependencies": {
     "@codearts-qqbot/core": "*",
     "@codearts-qqbot/ipc": "*",
-    "@codearts-qqbot/kernel-port": "*"
+    "@codearts-qqbot/kernel-port": "*",
+    "@wecom/aibot-node-sdk": "^1.0.7"
   },
   "scripts": {
     "test": "vitest run",
