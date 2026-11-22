@@ -53,8 +53,8 @@ interface Pending {
 }
 
 function dataDirOf(): string {
-  const fromEnv = process.env.CODEARTS_QQBOT_DATA;
-  return fromEnv !== undefined && fromEnv.trim().length > 0 ? fromEnv : path.join(homedir(), ".codeartsdoer", "qqbot");
+  const fromEnv = process.env.CODEARTS_IM_DATA;
+  return fromEnv !== undefined && fromEnv.trim().length > 0 ? fromEnv : path.join(homedir(), ".codeartsdoer", "codearts-im");
 }
 
 /**
@@ -62,7 +62,7 @@ function dataDirOf(): string {
  *   起 IPC → 等待扩展下发 (QQ 凭据 + 内核连接) → 建 HttpKernelPort → 起 QQ 链路
  *
  * 凭据只存在于内存，不写日志、不落盘；
- * 访问名单与会话映射持久化在 CODEARTS_QQBOT_DATA，重启后可恢复。
+ * 访问名单与会话映射持久化在 CODEARTS_IM_DATA，重启后可恢复。
  */
 export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle> {
   const ipcPath = options.ipcPath ?? defaultIpcPath("vscode");
@@ -71,7 +71,7 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
   const logDir = path.join(dataDir, "logs");
   const startedAt = Date.now();
   const logger = teeLogger(
-    options.logger ?? createConsoleLogger(process.env.QQBOT_DEBUG === "1" ? "debug" : "info"),
+    options.logger ?? createConsoleLogger(process.env.CODEARTS_IM_DEBUG === "1" ? "debug" : "info"),
     createFileLogger(logDir),
   );
 
@@ -278,9 +278,9 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
     workspace: options.workspace,
     access: { c2cMode: "open", groupMode: "open", commandMode: "open" },
     media: {
-      enabled: process.env.QQBOT_MEDIA_ENABLED !== "0",
-      maxMB: Number(process.env.QQBOT_MEDIA_MAX_MB ?? 200),
-      ttlHours: Number(process.env.QQBOT_MEDIA_TTL_HOURS ?? 24),
+      enabled: process.env.CODEARTS_IM_MEDIA_ENABLED !== "0",
+      maxMB: Number(process.env.CODEARTS_IM_MEDIA_MAX_MB ?? 200),
+      ttlHours: Number(process.env.CODEARTS_IM_MEDIA_TTL_HOURS ?? 24),
     },
     sendFile: { restrict: true, extraRoots: [] },
   });

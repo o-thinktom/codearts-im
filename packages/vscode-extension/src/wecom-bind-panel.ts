@@ -87,7 +87,7 @@ const HTML = `<!DOCTYPE html>
  */
 export function showWecomBindPanel(options: WecomBindPanelOptions): vscode.Disposable {
   const panel = vscode.window.createWebviewPanel(
-    "codeartsQqbotWecomBind",
+    "codeartsImWecomBind",
     "绑定企业微信智能机器人",
     vscode.ViewColumn.Active,
     { enableScripts: true, retainContextWhenHidden: true },

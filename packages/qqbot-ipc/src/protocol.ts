@@ -130,9 +130,9 @@ export function encodeFrame(message: RpcMessage): string {
 export function defaultIpcPath(tag = "default"): string {
   if (process.platform === "win32") {
     const safe = tag.replace(/[^A-Za-z0-9_.-]/g, "_");
-    return `\\\\.\\pipe\\codearts-qqbot-${safe}`;
+    return `\\\\.\\pipe\\codearts-im-${safe}`;
   }
-  return path.join(os.tmpdir(), `codearts-qqbot-${tag}.sock`);
+  return path.join(os.tmpdir(), `codearts-im-${tag}.sock`);
 }
 
 export function isRequest(message: RpcMessage): message is RpcRequest {

@@ -74,7 +74,7 @@
 
 ## نسخه
 
-- نسخه فعلی: **0.3.2**
+- نسخه فعلی: **0.4.0**
 - مبنا: CodeArts Agent 26.11.100 / هسته 126.11.2
 - پس از ارتقای IDE یا هسته ابتدا ماتریس سازگاری را اجرا کنید
 
@@ -82,11 +82,11 @@
 
 پیش‌نیاز: Windows x64 و CodeArts Agent 26.11.x. نصب Node.js لازم **نیست**.
 
-    & "<مسیر CodeArts>\bin\codearts-agent.cmd" --install-extension "<مسیر>\codearts-im-0.3.2.vsix"
+    & "<مسیر CodeArts>\bin\codearts-agent.cmd" --install-extension "<مسیر>\codearts-im-0.4.0.vsix"
 
 سپس «Developer: Reload Window» را اجرا کنید.
 
-> پیش از ارتقا، فرایندهای قدیمی را پایان دهید: `taskkill /IM qqbot-sidecar-win32-x64.exe /F`.
+> پیش از ارتقا، فرایندهای قدیمی را پایان دهید: `taskkill /IM codearts-im-sidecar-win32-x64.exe /F`.
 
 ## شروع سریع
 
@@ -105,15 +105,15 @@
 
 | تنظیم | پیش‌فرض | توضیح |
 |---|---|---|
-| `codeartsQqbot.enabled` | `false` | اجرای sidecar همراه IDE |
-| `codeartsQqbot.provider` | `inferhub-provider` | ارائه‌دهنده مدل |
-| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | شناسه مدل؛ خالی نگذارید |
-| `codeartsQqbot.agent` | `build` | نام عامل |
-| `codeartsQqbot.access.c2cMode` | `open` | حالت دسترسی خصوصی |
-| `codeartsQqbot.access.groupMode` | `allowlist` | حالت دسترسی گروه (توصیه‌شده) |
-| `codeartsQqbot.textChunkLimit` | `4500` | حداکثر نویسه هر پیام (محدودیت کانال اولویت دارد) |
-| `codeartsQqbot.media.maxMB` | `200` | محدودیت رسانه ورودی |
-| `codeartsQqbot.sendFile.restrict` | `true` | محدودکردن مسیر فایل خروجی |
+| `codeartsIm.enabled` | `false` | اجرای sidecar همراه IDE |
+| `codeartsIm.provider` | `inferhub-provider` | ارائه‌دهنده مدل |
+| `codeartsIm.model` | `deepseek-v4.1-flash-1017` | شناسه مدل؛ خالی نگذارید |
+| `codeartsIm.agent` | `build` | نام عامل |
+| `codeartsIm.access.c2cMode` | `open` | حالت دسترسی خصوصی |
+| `codeartsIm.access.groupMode` | `allowlist` | حالت دسترسی گروه (توصیه‌شده) |
+| `codeartsIm.textChunkLimit` | `4500` | حداکثر نویسه هر پیام (محدودیت کانال اولویت دارد) |
+| `codeartsIm.media.maxMB` | `200` | محدودیت رسانه ورودی |
+| `codeartsIm.sendFile.restrict` | `true` | محدودکردن مسیر فایل خروجی |
 
 ## فرمان‌ها
 
@@ -129,7 +129,7 @@
 
 ## عیب‌یابی
 
-- گزارش: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (۴ مگابایت × ۵)
+- گزارش: `<globalStorage>/codearts-community.codearts-im/codearts-im/logs/sidecar.log` (۴ مگابایت × ۵)
 - خروجی: «CodeArts IM: 导出诊断包» شامل وضعیت، لوله IPC، تنظیمات، ۳۰۰ خط گزارش و ماتریس سازگاری
 - پنل خروجی: `CodeArts IM`
 

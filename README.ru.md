@@ -74,7 +74,7 @@ IM-шлюз для локального **Huawei Cloud CodeArts Agent**: одн�
 
 ## Версия
 
-- Текущая: **0.3.2** (SemVer; в 0.x интерфейсы могут меняться)
+- Текущая: **0.4.0** (SemVer; в 0.x интерфейсы могут меняться)
 - Базовая линия: CodeArts Agent 26.11.100 / ядро 126.11.2
 - После обновления IDE или ядра сначала запускайте матрицу совместимости
 
@@ -82,11 +82,11 @@ IM-шлюз для локального **Huawei Cloud CodeArts Agent**: одн�
 
 Требования: Windows x64, CodeArts Agent 26.11.x. Node.js **не** требуется.
 
-    & "<каталог CodeArts>\bin\codearts-agent.cmd" --install-extension "<путь>\codearts-im-0.3.2.vsix"
+    & "<каталог CodeArts>\bin\codearts-agent.cmd" --install-extension "<путь>\codearts-im-0.4.0.vsix"
 
 Также можно установить из панели расширений («Install from VSIX»), затем «Developer: Reload Window».
 
-> Перед обновлением завершите старые процессы: `taskkill /IM qqbot-sidecar-win32-x64.exe /F`, чтобы освободить IPC-канал.
+> Перед обновлением завершите старые процессы: `taskkill /IM codearts-im-sidecar-win32-x64.exe /F`, чтобы освободить IPC-канал.
 
 ## Быстрый старт
 
@@ -109,15 +109,15 @@ IM-шлюз для локального **Huawei Cloud CodeArts Agent**: одн�
 
 | Параметр | По умолчанию | Описание |
 |---|---|---|
-| `codeartsQqbot.enabled` | `false` | Запускать sidecar вместе с IDE |
-| `codeartsQqbot.provider` | `inferhub-provider` | Провайдер модели |
-| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | ID модели; не оставлять пустым |
-| `codeartsQqbot.agent` | `build` | Имя агента |
-| `codeartsQqbot.access.c2cMode` | `open` | Режим доступа в личных сообщениях |
-| `codeartsQqbot.access.groupMode` | `allowlist` | Режим доступа в группах (рекомендуется) |
-| `codeartsQqbot.textChunkLimit` | `4500` | Максимум символов (лимит канала важнее) |
-| `codeartsQqbot.media.maxMB` | `200` | Лимит входящих медиа |
-| `codeartsQqbot.sendFile.restrict` | `true` | Ограничивать пути исходящих файлов |
+| `codeartsIm.enabled` | `false` | Запускать sidecar вместе с IDE |
+| `codeartsIm.provider` | `inferhub-provider` | Провайдер модели |
+| `codeartsIm.model` | `deepseek-v4.1-flash-1017` | ID модели; не оставлять пустым |
+| `codeartsIm.agent` | `build` | Имя агента |
+| `codeartsIm.access.c2cMode` | `open` | Режим доступа в личных сообщениях |
+| `codeartsIm.access.groupMode` | `allowlist` | Режим доступа в группах (рекомендуется) |
+| `codeartsIm.textChunkLimit` | `4500` | Максимум символов (лимит канала важнее) |
+| `codeartsIm.media.maxMB` | `200` | Лимит входящих медиа |
+| `codeartsIm.sendFile.restrict` | `true` | Ограничивать пути исходящих файлов |
 
 ## Команды
 
@@ -141,7 +141,7 @@ IM-шлюз для локального **Huawei Cloud CodeArts Agent**: одн�
 
 ## Диагностика
 
-- Журнал: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 МБ × 5)
+- Журнал: `<globalStorage>/codearts-community.codearts-im/codearts-im/logs/sidecar.log` (4 МБ × 5)
 - Экспорт: «CodeArts IM: 导出诊断包» — состояние расширения и sidecar, канал IPC, снимок настроек, 300 строк журнала и матрица совместимости
 - Панель вывода: `CodeArts IM`
 

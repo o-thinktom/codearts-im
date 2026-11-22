@@ -74,7 +74,7 @@ The result is written to `compat-matrix.json` and can be embedded in the diagnos
 
 ## Version
 
-- Current: **0.3.2** (Semantic Versioning; interfaces may change during 0.x)
+- Current: **0.4.0** (Semantic Versioning; interfaces may change during 0.x)
 - Baseline: CodeArts Agent 26.11.100 / Kernel 126.11.2
 - Upgrade policy: run the compatibility matrix after any IDE/kernel upgrade
 - Change history: repository commits; this release adds the three channels, WeCom streaming and diagnostics
@@ -83,11 +83,13 @@ The result is written to `compat-matrix.json` and can be embedded in the diagnos
 
 Requirements: Windows x64, CodeArts Agent 26.11.x. Node.js is **not** required.
 
-    & "<CodeArts install dir>\bin\codearts-agent.cmd" --install-extension "<path>\codearts-im-0.3.2.vsix"
+    & "<CodeArts install dir>\bin\codearts-agent.cmd" --install-extension "<path>\codearts-im-0.4.0.vsix"
 
 You can also install from the extension panel via “Install from VSIX”, then run “Developer: Reload Window”.
 
-> Before upgrading, terminate stale processes: `taskkill /IM qqbot-sidecar-win32-x64.exe /F` so the old sidecar releases the IPC pipe.
+> Before upgrading, terminate stale processes: `taskkill /IM codearts-im-sidecar-win32-x64.exe /F` so the old sidecar releases the IPC pipe.
+>
+> **Starting with 0.4.0 the extension ID is `codearts-community.codearts-im`.** Uninstall the old `codearts-qqbot-cn` first, otherwise both extensions will run; settings and credentials are not migrated and must be re-bound.
 
 ## Quick start
 
@@ -110,15 +112,15 @@ Notes:
 
 | Setting | Default | Description |
 |---|---|---|
-| `codeartsQqbot.enabled` | `false` | Start the sidecar with the IDE |
-| `codeartsQqbot.provider` | `inferhub-provider` | Model provider |
-| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | Model ID; never leave empty (auto-router may pick an unusable model) |
-| `codeartsQqbot.agent` | `build` | Agent name |
-| `codeartsQqbot.access.c2cMode` | `open` | Direct-message access mode |
-| `codeartsQqbot.access.groupMode` | `allowlist` | Group access mode (recommended) |
-| `codeartsQqbot.textChunkLimit` | `4500` | Max chars per message (channel capability wins) |
-| `codeartsQqbot.media.maxMB` | `200` | Inbound media size limit |
-| `codeartsQqbot.sendFile.restrict` | `true` | Restrict outbound file paths |
+| `codeartsIm.enabled` | `false` | Start the sidecar with the IDE |
+| `codeartsIm.provider` | `inferhub-provider` | Model provider |
+| `codeartsIm.model` | `deepseek-v4.1-flash-1017` | Model ID; never leave empty (auto-router may pick an unusable model) |
+| `codeartsIm.agent` | `build` | Agent name |
+| `codeartsIm.access.c2cMode` | `open` | Direct-message access mode |
+| `codeartsIm.access.groupMode` | `allowlist` | Group access mode (recommended) |
+| `codeartsIm.textChunkLimit` | `4500` | Max chars per message (channel capability wins) |
+| `codeartsIm.media.maxMB` | `200` | Inbound media size limit |
+| `codeartsIm.sendFile.restrict` | `true` | Restrict outbound file paths |
 
 ## Commands
 
@@ -142,7 +144,7 @@ Notes:
 
 ## Diagnostics and troubleshooting
 
-- Log file: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 MB × 5 rotation)
+- Log file: `<globalStorage>/codearts-community.codearts-im/codearts-im/logs/sidecar.log` (4 MB × 5 rotation)
 - One-click export: “CodeArts IM: 导出诊断包” — includes extension/sidecar status, pipe state, config snapshot, last 300 log lines and the compat matrix
 - Output channel: `CodeArts IM`
 

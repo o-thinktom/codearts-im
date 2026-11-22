@@ -74,7 +74,7 @@
 
 ## 版本
 
-- 当前版本：**0.3.2**（语义化版本，0.x 阶段接口可能调整）
+- 当前版本：**0.4.0**（语义化版本，0.x 阶段接口可能调整）
 - 兼容基线：码道 26.11.100 / 内核 126.11.2
 - 升级策略：码道或内核升级后先跑兼容矩阵，再升级插件
 - 变更记录：见仓库提交历史；本版新增三通道、企微流式与诊断增强
@@ -83,11 +83,13 @@
 
 要求：Windows x64、码道 26.11.x；无需安装 Node.js。
 
-    & "<码道安装目录>\bin\codearts-agent.cmd" --install-extension "<路径>\codearts-im-0.3.2.vsix"
+    & "<码道安装目录>\bin\codearts-agent.cmd" --install-extension "<路径>\codearts-im-0.4.0.vsix"
 
 也可在码道扩展面板选择「从 VSIX 安装」。安装后执行「Developer: Reload Window」。
 
-> 升级前建议先结束残留进程：`taskkill /IM qqbot-sidecar-win32-x64.exe /F`，避免旧 sidecar 占用 IPC 管道。
+> 升级前建议先结束残留进程：`taskkill /IM codearts-im-sidecar-win32-x64.exe /F`，避免旧 sidecar 占用 IPC 管道。
+>
+> **0.4.0 起扩展 ID 为 `codearts-community.codearts-im`**。安装前请卸载旧版 `codearts-qqbot-cn`，否则两个扩展会同时运行；旧版配置与凭据不会迁移，需要重新扫码绑定。
 
 ## 快速开始
 
@@ -110,15 +112,15 @@
 
 | 配置项 | 默认 | 说明 |
 |---|---|---|
-| `codeartsQqbot.enabled` | `false` | 是否随 IDE 启动 sidecar |
-| `codeartsQqbot.provider` | `inferhub-provider` | 模型供应商 |
-| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | 模型 ID，请勿留空（auto-router 可能命中不可用模型） |
-| `codeartsQqbot.agent` | `build` | 使用的 Agent |
-| `codeartsQqbot.access.c2cMode` | `open` | 私聊访问模式 |
-| `codeartsQqbot.access.groupMode` | `allowlist` | 群聊访问模式（正式使用建议保持） |
-| `codeartsQqbot.textChunkLimit` | `4500` | 单条消息最大字符数（实际上限取通道能力表） |
-| `codeartsQqbot.media.maxMB` | `200` | 入站媒体大小上限 |
-| `codeartsQqbot.sendFile.restrict` | `true` | 限制可回传的文件路径 |
+| `codeartsIm.enabled` | `false` | 是否随 IDE 启动 sidecar |
+| `codeartsIm.provider` | `inferhub-provider` | 模型供应商 |
+| `codeartsIm.model` | `deepseek-v4.1-flash-1017` | 模型 ID，请勿留空（auto-router 可能命中不可用模型） |
+| `codeartsIm.agent` | `build` | 使用的 Agent |
+| `codeartsIm.access.c2cMode` | `open` | 私聊访问模式 |
+| `codeartsIm.access.groupMode` | `allowlist` | 群聊访问模式（正式使用建议保持） |
+| `codeartsIm.textChunkLimit` | `4500` | 单条消息最大字符数（实际上限取通道能力表） |
+| `codeartsIm.media.maxMB` | `200` | 入站媒体大小上限 |
+| `codeartsIm.sendFile.restrict` | `true` | 限制可回传的文件路径 |
 
 ## 常用命令
 
@@ -142,7 +144,7 @@
 
 ## 诊断与故障排查
 
-- 日志落盘：`<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log`（4MB × 5 轮转）
+- 日志落盘：`<globalStorage>/codearts-community.codearts-im/codearts-im/logs/sidecar.log`（4MB × 5 轮转）
 - 一键导出：「CodeArts IM: 导出诊断包」，内容包含扩展/侧车状态、管道、配置快照、最近 300 行日志与兼容矩阵
 - 输出面板：`CodeArts IM`
 

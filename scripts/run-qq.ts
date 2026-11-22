@@ -9,8 +9,8 @@
  *   QQBOT_KERNEL_MODE=mock QQBOT_APPID=xxx QQBOT_SECRET=yyy npm run run:qq
  *
  * 由扩展拉起时会注入：
- *   QQBOT_IPC_PIPE / --ipc-pipe
- *   QQBOT_IPC_TOKEN / --ipc-token
+ *   CODEARTS_IM_IPC_PIPE / --ipc-pipe
+ *   CODEARTS_IM_IPC_TOKEN / --ipc-token
  */
 import { randomUUID } from "node:crypto";
 import { AccessController, MemoryAccessStore, createConsoleLogger } from "@codearts-qqbot/core";
@@ -39,7 +39,7 @@ if (appId === undefined || appSecret === undefined) {
 }
 
 const mode = process.env.QQBOT_KERNEL_MODE ?? "auto";
-const logger = createConsoleLogger(process.env.QQBOT_DEBUG === "1" ? "debug" : "info");
+const logger = createConsoleLogger(process.env.CODEARTS_IM_DEBUG === "1" ? "debug" : "info");
 const workspace = process.cwd();
 
 let ipc: IpcServer | undefined;
@@ -52,8 +52,8 @@ if (mode === "mock") {
   });
   console.log("[run:qq] kernel=mock");
 } else {
-  const pipePath = argOf("--ipc-pipe") ?? process.env.QQBOT_IPC_PIPE ?? defaultIpcPath("vscode");
-  const token = argOf("--ipc-token") ?? process.env.QQBOT_IPC_TOKEN ?? randomUUID();
+  const pipePath = argOf("--ipc-pipe") ?? process.env.CODEARTS_IM_IPC_PIPE ?? defaultIpcPath("vscode");
+  const token = argOf("--ipc-token") ?? process.env.CODEARTS_IM_IPC_TOKEN ?? randomUUID();
 
   let connection: KernelConnection | undefined;
   let resolveConnection: ((c: KernelConnection) => void) | undefined;

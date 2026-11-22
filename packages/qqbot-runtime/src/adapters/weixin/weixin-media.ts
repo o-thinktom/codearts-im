@@ -128,7 +128,7 @@ export class WeixinMedia {
     options: WeixinMediaOptions = {},
   ) {
     this.fetchImpl = options.fetchImpl ?? fetch;
-    this.botAgent = options.botAgent ?? "CodeArtsIMS/0.3.2";
+    this.botAgent = options.botAgent ?? "CodeArtsIMS/0.4.0";
     this.maxDownloadBytes = options.maxDownloadBytes ?? 20 * 1024 * 1024;
   }
 

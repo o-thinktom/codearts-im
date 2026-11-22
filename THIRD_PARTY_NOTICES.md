@@ -1,6 +1,6 @@
 # 第三方组件与许可证 / Third-Party Notices
 
-> codearts-im（扩展 ID `codearts-qqbot-cn`）· 更新日期 2026-11-22
+> codearts-im（扩展 ID `codearts-im`）· 更新日期 2026-11-22
 
 本文件列出直接依赖、开发依赖与参考实现。传递依赖请以各包内 `LICENSE` 为准；发布前建议生成完整 SBOM（见文末命令）。
 

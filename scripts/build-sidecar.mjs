@@ -23,7 +23,7 @@ const BIN_DIR = path.join(ROOT, "packages/vscode-extension/bin");
 const platform = process.platform;
 const arch = process.arch;
 const exeExt = platform === "win32" ? ".exe" : "";
-const target = path.join(BIN_DIR, `qqbot-sidecar-${platform}-${arch}${exeExt}`);
+const target = path.join(BIN_DIR, `codearts-im-sidecar-${platform}-${arch}${exeExt}`);
 
 mkdirSync(OUT_DIR, { recursive: true });
 mkdirSync(BIN_DIR, { recursive: true });

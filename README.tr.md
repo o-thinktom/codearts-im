@@ -74,7 +74,7 @@ Sonuç `compat-matrix.json` dosyasına yazılır ve tanılama paketine eklenebil
 
 ## Sürüm
 
-- Güncel: **0.3.2**
+- Güncel: **0.4.0**
 - Taban: CodeArts Agent 26.11.100 / çekirdek 126.11.2
 - IDE veya çekirdek yükseltmesinden sonra önce uyumluluk matrisini çalıştırın
 
@@ -82,11 +82,11 @@ Sonuç `compat-matrix.json` dosyasına yazılır ve tanılama paketine eklenebil
 
 Gereksinimler: Windows x64, CodeArts Agent 26.11.x. Node.js **gerekmez**.
 
-    & "<CodeArts dizini>\bin\codearts-agent.cmd" --install-extension "<yol>\codearts-im-0.3.2.vsix"
+    & "<CodeArts dizini>\bin\codearts-agent.cmd" --install-extension "<yol>\codearts-im-0.4.0.vsix"
 
 Ardından «Developer: Reload Window» çalıştırın.
 
-> Yükseltmeden önce eski süreçleri kapatın: `taskkill /IM qqbot-sidecar-win32-x64.exe /F`.
+> Yükseltmeden önce eski süreçleri kapatın: `taskkill /IM codearts-im-sidecar-win32-x64.exe /F`.
 
 ## Hızlı başlangıç
 
@@ -105,15 +105,15 @@ Notlar: aynı anda tek kanal etkindir; geri dönmek için yeniden tarayın. İlk
 
 | Ayar | Varsayılan | Açıklama |
 |---|---|---|
-| `codeartsQqbot.enabled` | `false` | Sidecar'ı IDE ile başlat |
-| `codeartsQqbot.provider` | `inferhub-provider` | Model sağlayıcı |
-| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | Model kimliği; boş bırakmayın |
-| `codeartsQqbot.agent` | `build` | Agent adı |
-| `codeartsQqbot.access.c2cMode` | `open` | Birebir erişim modu |
-| `codeartsQqbot.access.groupMode` | `allowlist` | Grup erişim modu (önerilir) |
-| `codeartsQqbot.textChunkLimit` | `4500` | Mesaj başına maks. karakter (kanal limiti önceliklidir) |
-| `codeartsQqbot.media.maxMB` | `200` | Gelen medya sınırı |
-| `codeartsQqbot.sendFile.restrict` | `true` | Giden dosya yollarını kısıtla |
+| `codeartsIm.enabled` | `false` | Sidecar'ı IDE ile başlat |
+| `codeartsIm.provider` | `inferhub-provider` | Model sağlayıcı |
+| `codeartsIm.model` | `deepseek-v4.1-flash-1017` | Model kimliği; boş bırakmayın |
+| `codeartsIm.agent` | `build` | Agent adı |
+| `codeartsIm.access.c2cMode` | `open` | Birebir erişim modu |
+| `codeartsIm.access.groupMode` | `allowlist` | Grup erişim modu (önerilir) |
+| `codeartsIm.textChunkLimit` | `4500` | Mesaj başına maks. karakter (kanal limiti önceliklidir) |
+| `codeartsIm.media.maxMB` | `200` | Gelen medya sınırı |
+| `codeartsIm.sendFile.restrict` | `true` | Giden dosya yollarını kısıtla |
 
 ## Komutlar
 
@@ -129,7 +129,7 @@ Notlar: aynı anda tek kanal etkindir; geri dönmek için yeniden tarayın. İlk
 
 ## Tanılama
 
-- Günlük: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 MB × 5)
+- Günlük: `<globalStorage>/codearts-community.codearts-im/codearts-im/logs/sidecar.log` (4 MB × 5)
 - Dışa aktarma: «CodeArts IM: 导出诊断包» — eklenti/sidecar durumu, IPC kanalı, ayar özeti, son 300 satır ve uyumluluk matrisi
 - Çıktı paneli: `CodeArts IM`
 

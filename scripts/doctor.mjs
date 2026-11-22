@@ -47,7 +47,7 @@ tryIt("内核二进制", () => {
 });
 
 tryIt("数据目录", () => {
-  const dir = path.join(homedir(), ".codeartsdoer", "qqbot");
+  const dir = path.join(homedir(), ".codeartsdoer", "codearts-im");
   accessSync(path.dirname(dir), constants.W_OK);
   return dir;
 });
@@ -61,7 +61,7 @@ tryIt("内核配置", () => {
 });
 
 warn("QQ 出网", "请在运行期验证 wss 握手（离线开发可忽略）");
-warn("命名管道", "Windows 需允许 \\\\.\\pipe\\codearts-qqbot-*");
+warn("命名管道", "Windows 需允许 \\\\.\\pipe\\codearts-im-*");
 
 function tryIt(label, fn) {
   try {

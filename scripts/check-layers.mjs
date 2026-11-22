@@ -9,7 +9,7 @@ const RULES = {
   "@codearts-qqbot/ipc": [],
   "@codearts-qqbot/kernel-port": ["@codearts-qqbot/core"],
   "@codearts-qqbot/runtime": ["@codearts-qqbot/core", "@codearts-qqbot/ipc", "@codearts-qqbot/kernel-port"],
-  "codearts-qqbot-cn": ["@codearts-qqbot/ipc"],
+  "codearts-im": ["@codearts-qqbot/ipc"],
 };
 
 const DIRS = {
@@ -17,7 +17,7 @@ const DIRS = {
   "@codearts-qqbot/ipc": "qqbot-ipc",
   "@codearts-qqbot/kernel-port": "qqbot-kernel-port",
   "@codearts-qqbot/runtime": "qqbot-runtime",
-  "codearts-qqbot-cn": "vscode-extension",
+  "codearts-im": "vscode-extension",
 };
 
 const FORBIDDEN_IN_CORE = [

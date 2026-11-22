@@ -115,7 +115,7 @@ export class WeixinApi {
   constructor(options: WeixinApiOptions = {}) {
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.baseUrl = normalizeBaseUrl(options.baseUrl ?? WEIXIN_QR_BASE_URL);
-    this.botAgent = options.botAgent ?? `CodeArtsIMS/0.3.2`;
+    this.botAgent = options.botAgent ?? `CodeArtsIMS/0.4.0`;
   }
 
   get endpointBase(): string {

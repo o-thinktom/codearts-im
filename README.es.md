@@ -74,7 +74,7 @@ El resultado se escribe en `compat-matrix.json` y puede incluirse en el paquete 
 
 ## Versión
 
-- Actual: **0.3.2**
+- Actual: **0.4.0**
 - Base: CodeArts Agent 26.11.100 / núcleo 126.11.2
 - Tras actualizar el IDE o el núcleo, ejecute primero la matriz de compatibilidad
 
@@ -82,11 +82,11 @@ El resultado se escribe en `compat-matrix.json` y puede incluirse en el paquete 
 
 Requisitos: Windows x64 y CodeArts Agent 26.11.x. Node.js **no** es necesario.
 
-    & "<directorio de CodeArts>\bin\codearts-agent.cmd" --install-extension "<ruta>\codearts-im-0.3.2.vsix"
+    & "<directorio de CodeArts>\bin\codearts-agent.cmd" --install-extension "<ruta>\codearts-im-0.4.0.vsix"
 
 Después ejecute «Developer: Reload Window».
 
-> Antes de actualizar, cierre procesos antiguos: `taskkill /IM qqbot-sidecar-win32-x64.exe /F`.
+> Antes de actualizar, cierre procesos antiguos: `taskkill /IM codearts-im-sidecar-win32-x64.exe /F`.
 
 ## Inicio rápido
 
@@ -105,15 +105,15 @@ Notas: solo un canal está activo; vuelva a escanear para regresar. El primer ar
 
 | Ajuste | Predeterminado | Descripción |
 |---|---|---|
-| `codeartsQqbot.enabled` | `false` | Iniciar el sidecar con el IDE |
-| `codeartsQqbot.provider` | `inferhub-provider` | Proveedor del modelo |
-| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | ID del modelo; no lo deje vacío |
-| `codeartsQqbot.agent` | `build` | Nombre del agente |
-| `codeartsQqbot.access.c2cMode` | `open` | Modo de acceso directo |
-| `codeartsQqbot.access.groupMode` | `allowlist` | Modo de acceso en grupos (recomendado) |
-| `codeartsQqbot.textChunkLimit` | `4500` | Máximo de caracteres por mensaje (prevalece el canal) |
-| `codeartsQqbot.media.maxMB` | `200` | Límite de medios entrantes |
-| `codeartsQqbot.sendFile.restrict` | `true` | Restringir rutas de archivos salientes |
+| `codeartsIm.enabled` | `false` | Iniciar el sidecar con el IDE |
+| `codeartsIm.provider` | `inferhub-provider` | Proveedor del modelo |
+| `codeartsIm.model` | `deepseek-v4.1-flash-1017` | ID del modelo; no lo deje vacío |
+| `codeartsIm.agent` | `build` | Nombre del agente |
+| `codeartsIm.access.c2cMode` | `open` | Modo de acceso directo |
+| `codeartsIm.access.groupMode` | `allowlist` | Modo de acceso en grupos (recomendado) |
+| `codeartsIm.textChunkLimit` | `4500` | Máximo de caracteres por mensaje (prevalece el canal) |
+| `codeartsIm.media.maxMB` | `200` | Límite de medios entrantes |
+| `codeartsIm.sendFile.restrict` | `true` | Restringir rutas de archivos salientes |
 
 ## Comandos
 
@@ -129,7 +129,7 @@ Notas: solo un canal está activo; vuelva a escanear para regresar. El primer ar
 
 ## Diagnóstico
 
-- Registro: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 MB × 5)
+- Registro: `<globalStorage>/codearts-community.codearts-im/codearts-im/logs/sidecar.log` (4 MB × 5)
 - Exportación: «CodeArts IM: 导出诊断包» incluye estado, tubería IPC, configuración, últimas 300 líneas y la matriz de compatibilidad
 - Panel de salida: `CodeArts IM`
 

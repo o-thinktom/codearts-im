@@ -6,14 +6,14 @@ const argOf = (name: string): string | undefined => {
   return i >= 0 ? process.argv[i + 1] : undefined;
 };
 
-const ipcToken = argOf("--ipc-token") ?? process.env.QQBOT_IPC_TOKEN;
+const ipcToken = argOf("--ipc-token") ?? process.env.CODEARTS_IM_IPC_TOKEN;
 if (ipcToken === undefined || ipcToken.length === 0) {
   console.error("[sidecar] missing --ipc-token");
   process.exit(2);
 }
 
-const ipcPath = argOf("--ipc-pipe") ?? process.env.QQBOT_IPC_PIPE ?? defaultIpcPath("vscode");
-const workspace = argOf("--workspace") ?? process.env.CODEARTS_QQBOT_WORKSPACE ?? process.cwd();
+const ipcPath = argOf("--ipc-pipe") ?? process.env.CODEARTS_IM_IPC_PIPE ?? defaultIpcPath("vscode");
+const workspace = argOf("--workspace") ?? process.env.CODEARTS_IM_WORKSPACE ?? process.cwd();
 
 console.log(`[sidecar] starting ipc=${ipcPath} workspace=${workspace}`);
 

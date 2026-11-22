@@ -17,8 +17,8 @@ const INITIAL_BACKOFF_MS = 5000;
 /**
  * sidecar 守护：拉起、心跳、退避重启、清理。
  *
- * 生产形态：VSIX 内置 `bin/qqbot-sidecar-<platform>-<arch>[.exe]`；
- * 开发形态：可用 `codeartsQqbot.sidecarPath` 指向本地脚本。
+ * 生产形态：VSIX 内置 `bin/codearts-im-sidecar-<platform>-<arch>[.exe]`；
+ * 开发形态：可用 `codeartsIm.sidecarPath` 指向本地脚本。
  */
 export class SidecarSupervisor {
   private child: ChildProcessWithoutNullStreams | undefined;
@@ -54,13 +54,13 @@ export class SidecarSupervisor {
   }
 
   private resolveBinary(): string | undefined {
-    const configured = vscode.workspace.getConfiguration("codeartsQqbot").get<string>("sidecarPath");
+    const configured = vscode.workspace.getConfiguration("codeartsIm").get<string>("sidecarPath");
     if (typeof configured === "string" && configured.length > 0) return configured;
 
     const exe = process.platform === "win32" ? ".exe" : "";
     const candidate = path.join(
       this.context.asAbsolutePath("bin"),
-      `qqbot-sidecar-${process.platform}-${process.arch}${exe}`,
+      `codearts-im-sidecar-${process.platform}-${process.arch}${exe}`,
     );
     return fs.existsSync(candidate) ? candidate : undefined;
   }
@@ -71,7 +71,7 @@ export class SidecarSupervisor {
     const bin = this.resolveBinary();
     if (bin === undefined) {
       this.publishStatus({ state: "failed", detail: "未找到 sidecar 可执行文件", restarts: this.restarts });
-      this.log.appendLine("[qqbot] sidecar binary not found; set codeartsQqbot.sidecarPath for development");
+      this.log.appendLine("[codearts-im] sidecar binary not found; set codeartsIm.sidecarPath for development");
       return;
     }
 
@@ -79,7 +79,7 @@ export class SidecarSupervisor {
     const child = spawn(bin, this.launchArgs(), {
       stdio: "pipe",
       windowsHide: true,
-      env: { ...process.env, CODEARTS_QQBOT_DATA: path.join(this.context.globalStorageUri.fsPath, "qqbot") },
+      env: { ...process.env, CODEARTS_IM_DATA: path.join(this.context.globalStorageUri.fsPath, "codearts-im") },
     });
     this.child = child;
 
@@ -91,7 +91,7 @@ export class SidecarSupervisor {
     child.on("spawn", () => {
       this.backoff = INITIAL_BACKOFF_MS;
       this.publishStatus({ state: "running", restarts: this.restarts });
-      this.log.appendLine(`[qqbot] sidecar started: ${bin}`);
+      this.log.appendLine(`[codearts-im] sidecar started: ${bin}`);
       const stable = setTimeout(() => {
         this.restarts = 0;
         this.publishStatus({ state: "running", restarts: 0 });
@@ -101,14 +101,14 @@ export class SidecarSupervisor {
 
     child.on("error", (err) => {
       if (child !== this.child) return;
-      this.log.appendLine(`[qqbot] sidecar error: ${err.message}`);
+      this.log.appendLine(`[codearts-im] sidecar error: ${err.message}`);
       this.publishStatus({ state: "failed", detail: err.message, restarts: this.restarts });
     });
 
     child.on("exit", (code, signal) => {
       // restart()/stop() 会先清空 this.child；旧进程的退出不得触发新一轮重启
       if (child !== this.child) {
-        this.log.appendLine(`[qqbot] stale sidecar exited code=${code ?? "null"} signal=${signal ?? "null"} (ignored)`);
+        this.log.appendLine(`[codearts-im] stale sidecar exited code=${code ?? "null"} signal=${signal ?? "null"} (ignored)`);
         return;
       }
       this.stopHeartbeat();
@@ -117,7 +117,7 @@ export class SidecarSupervisor {
         this.publishStatus({ state: "stopped", restarts: this.restarts });
         return;
       }
-      this.log.appendLine(`[qqbot] sidecar exited code=${code ?? "null"} signal=${signal ?? "null"}`);
+      this.log.appendLine(`[codearts-im] sidecar exited code=${code ?? "null"} signal=${signal ?? "null"}`);
       this.publishStatus({ state: "failed", detail: `退出码 ${code ?? signal ?? "unknown"}`, restarts: this.restarts });
       this.scheduleRestart();
     });
@@ -129,7 +129,7 @@ export class SidecarSupervisor {
     this.stopHeartbeat();
     this.heartbeat = setInterval(() => {
       if (this.child === undefined || this.child.exitCode !== null) {
-        this.log.appendLine("[qqbot] heartbeat lost");
+        this.log.appendLine("[codearts-im] heartbeat lost");
         this.scheduleRestart();
       }
     }, 15000);
@@ -145,14 +145,14 @@ export class SidecarSupervisor {
   private scheduleRestart(): void {
     if (this.stopping || this.restartTimer !== undefined) return;
     if (this.restarts >= MAX_RESTARTS) {
-      this.log.appendLine("[qqbot] restart budget exhausted");
+      this.log.appendLine("[codearts-im] restart budget exhausted");
       this.publishStatus({ state: "failed", detail: "重启次数已达上限", restarts: this.restarts });
       return;
     }
     const delay = this.backoff;
     this.restarts += 1;
     this.backoff = Math.min(this.backoff * 2, 60000);
-    this.log.appendLine(`[qqbot] restarting in ${delay}ms (attempt ${this.restarts})`);
+    this.log.appendLine(`[codearts-im] restarting in ${delay}ms (attempt ${this.restarts})`);
     this.restartTimer = setTimeout(() => {
       this.restartTimer = undefined;
       this.start();

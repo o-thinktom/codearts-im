@@ -1,6 +1,6 @@
 # 隐私说明 / Privacy Notice
 
-> 适用于 codearts-im（扩展 ID `codearts-qqbot-cn`）· 维护者 ThinkTom · 更新日期 2026-11-22
+> 适用于 codearts-im（扩展 ID `codearts-im`）· 维护者 ThinkTom · 更新日期 2026-11-22
 
 ## 1. 这个插件做什么
 
@@ -27,9 +27,9 @@ codearts-im 把 IM（QQ / 微信 / 企业微信）中的消息转发给**你本�
 |---|---|---|
 | QQ AppSecret、微信 token、企微 secret | 系统凭据库（SecretStorage） | 不写入配置文件、仓库或日志 |
 | 码道内核口令 | 由码道以加密形式存储，插件只读解密 | 仅在内存中使用 |
-| 会话映射、访问名单、偏好 | `<globalStorage>/…/qqbot/*.json` | 可删除，删除后会话与白名单重置 |
-| 入站媒体 | `<globalStorage>/…/qqbot/media/` | 按 TTL 清理，可手动删除 |
-| 运行日志 | `<globalStorage>/…/qqbot/logs/sidecar.log` | 4 MB × 5 轮转，已脱敏 |
+| 会话映射、访问名单、偏好 | `<globalStorage>/…/codearts-im/*.json` | 可删除，删除后会话与白名单重置 |
+| 入站媒体 | `<globalStorage>/…/codearts-im/media/` | 按 TTL 清理，可手动删除 |
+| 运行日志 | `<globalStorage>/…/codearts-im/logs/sidecar.log` | 4 MB × 5 轮转，已脱敏 |
 
 ## 4. 我们不收集什么
 
@@ -50,7 +50,7 @@ codearts-im 把 IM（QQ / 微信 / 企业微信）中的消息转发给**你本�
 - 「QQ Bot: 停止」可随时停止 sidecar；
 - 切换通道会暂停其他通道；旧凭据保留，可重新扫码切回；
 - 访问名单支持 open / allowlist / disabled、配对码与撤销；
-- 删除 `<globalStorage>/…/qqbot/` 可清空会话、白名单与媒体缓存；
+- 删除 `<globalStorage>/…/codearts-im/` 可清空会话、白名单与媒体缓存；
 - 在系统凭据库中删除对应条目可移除通道凭据。
 
 ## 7. 第三方服务
@@ -85,9 +85,9 @@ Your IM client → platform servers (Tencent) → local sidecar (named-pipe IPC)
 
 - Channel credentials: system SecretStorage only; never in config, repository or logs.
 - Kernel password: stored encrypted by CodeArts; the plugin only decrypts read-only in memory.
-- Session mappings, access lists, preferences: `<globalStorage>/…/qqbot/*.json`.
-- Inbound media: `<globalStorage>/…/qqbot/media/` (TTL-cleaned).
-- Runtime logs: `<globalStorage>/…/qqbot/logs/sidecar.log` (4 MB × 5, redacted).
+- Session mappings, access lists, preferences: `<globalStorage>/…/codearts-im/*.json`.
+- Inbound media: `<globalStorage>/…/codearts-im/media/` (TTL-cleaned).
+- Runtime logs: `<globalStorage>/…/codearts-im/logs/sidecar.log` (4 MB × 5, redacted).
 
 ## Not collected
 
@@ -99,7 +99,7 @@ The export command applies a `[REDACTED]` pass to `appSecret` / `secret` / `toke
 
 ## Your controls
 
-Stop the sidecar at any time; switch channels by scanning again; configure open / allowlist / disabled access with pairing codes and revocation; delete `<globalStorage>/…/qqbot/` to reset sessions and media; remove credentials from the system secret store.
+Stop the sidecar at any time; switch channels by scanning again; configure open / allowlist / disabled access with pairing codes and revocation; delete `<globalStorage>/…/codearts-im/` to reset sessions and media; remove credentials from the system secret store.
 
 ## Third parties
 

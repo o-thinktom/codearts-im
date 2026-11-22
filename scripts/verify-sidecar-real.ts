@@ -12,7 +12,7 @@ import path from "node:path";
 import { IpcClient, defaultIpcPath } from "@codearts-qqbot/ipc";
 import { discoverKernel } from "../packages/vscode-extension/src/kernel-discovery.js";
 
-const exe = path.resolve("packages/vscode-extension/bin/qqbot-sidecar-win32-x64.exe");
+const exe = path.resolve("packages/vscode-extension/bin/codearts-im-sidecar-win32-x64.exe");
 const secretFile = path.resolve(".local/kernel-password.txt");
 const discovered = discoverKernel();
 

@@ -23,7 +23,7 @@ const listenSec = listenIndex >= 0 ? Number(process.argv[listenIndex + 1] ?? 20)
 
 const mask = (id: string): string => (id.length <= 8 ? id : `${id.slice(0, 4)}***${id.slice(-2)}`);
 
-const logger = createConsoleLogger(process.env.QQBOT_DEBUG === "1" ? "debug" : "info");
+const logger = createConsoleLogger(process.env.CODEARTS_IM_DEBUG === "1" ? "debug" : "info");
 const api = new QqApi({ appId, appSecret, logger });
 
 const probe = await api.probe();

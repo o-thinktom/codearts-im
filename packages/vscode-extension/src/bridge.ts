@@ -54,17 +54,17 @@ export class KernelBridge implements vscode.Disposable {
       client.on("close", () => {
         if (this.client === client) {
           this.client = undefined;
-          this.options.log("[qqbot] ipc bridge disconnected");
+          this.options.log("[codearts-im] ipc bridge disconnected");
           this.scheduleReconnect();
         }
       });
       this.attempts = 0;
-      this.options.log("[qqbot] ipc bridge connected");
+      this.options.log("[codearts-im] ipc bridge connected");
       this.readyHandler?.();
       return true;
     } catch (err) {
       client.close();
-      this.options.log(`[qqbot] ipc bridge connect failed: ${err instanceof Error ? err.message : String(err)}`);
+      this.options.log(`[codearts-im] ipc bridge connect failed: ${err instanceof Error ? err.message : String(err)}`);
       this.scheduleReconnect();
       return false;
     }
@@ -87,10 +87,10 @@ export class KernelBridge implements vscode.Disposable {
     }
     try {
       await this.client.request("kernel.set", connection);
-      this.options.log(`[qqbot] kernel pushed: ${connection.baseUrl} (${connection.source})`);
+      this.options.log(`[codearts-im] kernel pushed: ${connection.baseUrl} (${connection.source})`);
       return true;
     } catch (err) {
-      this.options.log(`[qqbot] kernel push failed: ${err instanceof Error ? err.message : String(err)}`);
+      this.options.log(`[codearts-im] kernel push failed: ${err instanceof Error ? err.message : String(err)}`);
       return false;
     }
   }
@@ -108,10 +108,10 @@ export class KernelBridge implements vscode.Disposable {
           : credentials.channel === "wecom"
             ? `wecom bot ${credentials.botId.slice(0, 6)}***`
             : `app ${credentials.appId.slice(0, 4)}***`;
-      this.options.log(`[qqbot] credentials pushed for ${label}`);
+      this.options.log(`[codearts-im] credentials pushed for ${label}`);
       return true;
     } catch (err) {
-      this.options.log(`[qqbot] credentials push failed: ${err instanceof Error ? err.message : String(err)}`);
+      this.options.log(`[codearts-im] credentials push failed: ${err instanceof Error ? err.message : String(err)}`);
       return false;
     }
   }
@@ -144,7 +144,7 @@ export class KernelBridge implements vscode.Disposable {
     try {
       return await this.client.request<T>(method, params);
     } catch (err) {
-      this.options.log(`[qqbot] ipc ${method} failed: ${err instanceof Error ? err.message : String(err)}`);
+      this.options.log(`[codearts-im] ipc ${method} failed: ${err instanceof Error ? err.message : String(err)}`);
       return undefined;
     }
   }

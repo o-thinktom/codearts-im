@@ -1,8 +1,8 @@
 {
-  "name": "codearts-qqbot-cn",
+  "name": "codearts-im",
   "displayName": "CodeArts IM",
   "description": "通过 QQ / 微信 / 企业微信驱动码道 CodeArts Agent",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "publisher": "codearts-community",
   "private": true,
   "engines": {
@@ -27,135 +27,135 @@
   "contributes": {
     "commands": [
       {
-        "command": "codeartsQqbot.start",
+        "command": "codeartsIm.start",
         "title": "CodeArts IM: 启动"
       },
       {
-        "command": "codeartsQqbot.stop",
+        "command": "codeartsIm.stop",
         "title": "CodeArts IM: 停止"
       },
       {
-        "command": "codeartsQqbot.restart",
+        "command": "codeartsIm.restart",
         "title": "CodeArts IM: 重启"
       },
       {
-        "command": "codeartsQqbot.bind",
+        "command": "codeartsIm.bind",
         "title": "CodeArts IM: 扫码绑定机器人"
       },
       {
-        "command": "codeartsQqbot.bindWeixin",
+        "command": "codeartsIm.bindWeixin",
         "title": "CodeArts IM: 扫码绑定微信"
       },
       {
-        "command": "codeartsQqbot.bindWecom",
+        "command": "codeartsIm.bindWecom",
         "title": "CodeArts IM: 扫码绑定企业微信"
       },
       {
-        "command": "codeartsQqbot.bindManual",
+        "command": "codeartsIm.bindManual",
         "title": "CodeArts IM: 手动填写凭据"
       },
       {
-        "command": "codeartsQqbot.manageAccess",
+        "command": "codeartsIm.manageAccess",
         "title": "CodeArts IM: 管理访问名单"
       },
       {
-        "command": "codeartsQqbot.setKernelConnection",
+        "command": "codeartsIm.setKernelConnection",
         "title": "CodeArts IM: 设置内核连接"
       },
       {
-        "command": "codeartsQqbot.showStatus",
+        "command": "codeartsIm.showStatus",
         "title": "CodeArts IM: 显示状态"
       },
       {
-        "command": "codeartsQqbot.exportDiagnostics",
+        "command": "codeartsIm.exportDiagnostics",
         "title": "CodeArts IM: 导出诊断包"
       }
     ],
     "configuration": {
       "title": "CodeArts IM",
       "properties": {
-        "codeartsQqbot.kernel.username": {
+        "codeartsIm.kernel.username": {
           "type": "string",
           "default": "codearts",
           "description": "内核 Basic Auth 用户名（码道默认 codearts）"
         },
-        "codeartsQqbot.sidecarPath": {
+        "codeartsIm.sidecarPath": {
           "type": "string",
           "default": "",
           "description": "开发用：自定义 sidecar 可执行文件路径"
         },
-        "codeartsQqbot.enabled": {
+        "codeartsIm.enabled": {
           "type": "boolean",
           "default": false,
           "description": "启用 QQ 机器人"
         },
-        "codeartsQqbot.workspace": {
+        "codeartsIm.workspace": {
           "type": "string",
           "default": "",
           "description": "Agent 工作目录，留空则使用当前工作区"
         },
-        "codeartsQqbot.agent": {
+        "codeartsIm.agent": {
           "type": "string",
           "default": "",
           "description": "使用的 agent，留空跟随码道默认"
         },
-        "codeartsQqbot.provider": {
+        "codeartsIm.provider": {
           "type": "string",
           "default": "",
           "description": "模型 provider，留空跟随码道"
         },
-        "codeartsQqbot.model": {
+        "codeartsIm.model": {
           "type": "string",
           "default": "",
           "description": "模型名称，留空跟随码道"
         },
-        "codeartsQqbot.requireMention": {
+        "codeartsIm.requireMention": {
           "type": "boolean",
           "default": true,
           "description": "群聊中必须 @机器人 才响应"
         },
-        "codeartsQqbot.streaming": {
+        "codeartsIm.streaming": {
           "type": "boolean",
           "default": true,
           "description": "启用流式输出（内核不支持时自动降级）"
         },
-        "codeartsQqbot.textChunkLimit": {
+        "codeartsIm.textChunkLimit": {
           "type": "number",
           "default": 4500,
           "minimum": 500,
           "maximum": 8000,
           "description": "单条消息最大字符数"
         },
-        "codeartsQqbot.sessionIdleTimeout": {
+        "codeartsIm.sessionIdleTimeout": {
           "type": "number",
           "default": 1800000,
           "description": "会话闲置回收时间（毫秒）"
         },
-        "codeartsQqbot.processingTimeout": {
+        "codeartsIm.processingTimeout": {
           "type": "number",
           "default": 1800000,
           "description": "单轮处理超时（毫秒）"
         },
-        "codeartsQqbot.maxQueue": {
+        "codeartsIm.maxQueue": {
           "type": "number",
           "default": 20,
           "minimum": 1,
           "maximum": 200,
           "description": "单会话排队上限"
         },
-        "codeartsQqbot.historyLimit": {
+        "codeartsIm.historyLimit": {
           "type": "number",
           "default": 10,
           "minimum": 0,
           "maximum": 50,
           "description": "群聊注入的历史条数"
         },
-        "codeartsQqbot.showToolResults": {
+        "codeartsIm.showToolResults": {
           "type": "boolean",
           "default": false,
           "description": "展示成功工具结果（错误始终展示）"
         },
-        "codeartsQqbot.access.c2cMode": {
+        "codeartsIm.access.c2cMode": {
           "type": "string",
           "enum": [
             "open",
@@ -165,7 +165,7 @@
           "default": "open",
           "description": "私聊访问模式"
         },
-        "codeartsQqbot.access.groupMode": {
+        "codeartsIm.access.groupMode": {
           "type": "string",
           "enum": [
             "open",
@@ -175,7 +175,7 @@
           "default": "allowlist",
           "description": "群聊访问模式"
         },
-        "codeartsQqbot.access.commandMode": {
+        "codeartsIm.access.commandMode": {
           "type": "string",
           "enum": [
             "open",
@@ -185,37 +185,37 @@
           "default": "allowlist",
           "description": "命令访问模式"
         },
-        "codeartsQqbot.media.enabled": {
+        "codeartsIm.media.enabled": {
           "type": "boolean",
           "default": true,
           "description": "启用图片/文件处理"
         },
-        "codeartsQqbot.media.maxMB": {
+        "codeartsIm.media.maxMB": {
           "type": "number",
           "default": 200,
           "description": "单个媒体文件上限（MB）"
         },
-        "codeartsQqbot.media.ttlHours": {
+        "codeartsIm.media.ttlHours": {
           "type": "number",
           "default": 24,
           "description": "媒体文件保留时长（小时）"
         },
-        "codeartsQqbot.sendFile.restrict": {
+        "codeartsIm.sendFile.restrict": {
           "type": "boolean",
           "default": true,
           "description": "限制可发送文件的路径范围"
         },
-        "codeartsQqbot.residentMode": {
+        "codeartsIm.residentMode": {
           "type": "boolean",
           "default": false,
           "description": "IDE 关闭后保持文本对话（不支持本地工具）"
         },
-        "codeartsQqbot.quota.dailyCredits": {
+        "codeartsIm.quota.dailyCredits": {
           "type": "number",
           "default": 0,
           "description": "日额度上限（0 表示不限额）"
         },
-        "codeartsQqbot.debug": {
+        "codeartsIm.debug": {
           "type": "boolean",
           "default": false,
           "description": "输出调试日志"

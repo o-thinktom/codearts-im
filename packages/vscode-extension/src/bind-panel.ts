@@ -70,7 +70,7 @@ const HTML = `<!DOCTYPE html>
  */
 export function showBindPanel(options: BindPanelOptions): vscode.WebviewPanel {
   const panel = vscode.window.createWebviewPanel(
-    "codeartsQqbotBind",
+    "codeartsImBind",
     "扫码绑定 QQ 机器人",
     vscode.ViewColumn.Active,
     { enableScripts: true, retainContextWhenHidden: true },

@@ -90,7 +90,7 @@ const HTML = `<!DOCTYPE html>
  */
 export function showWeixinBindPanel(options: WeixinBindPanelOptions): vscode.WebviewPanel {
   const panel = vscode.window.createWebviewPanel(
-    "codeartsQqbotBindWeixin",
+    "codeartsImBindWeixin",
     "扫码绑定微信机器人",
     vscode.ViewColumn.Active,
     { enableScripts: true, retainContextWhenHidden: true },
