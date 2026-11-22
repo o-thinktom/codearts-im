@@ -100,6 +100,58 @@ describe("交付物路径解析", () => {
     expect(transport.files[0]?.files).toHaveLength(1);
     expect(transport.files[0]?.files[0]?.path).toBe("E:/abs/a.png");
   });
+
+  it("browser 预览工作区内图片时作为交付物发送", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "tool/call",
+      sessionId: "s1",
+      callId: "c1",
+      name: "browser",
+      args: { url: "file:///E:/ws/demo/output/chart.png" },
+    });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+
+    await router.flushAll();
+    expect(transport.files[0]?.files).toHaveLength(1);
+    expect(transport.files[0]?.files[0]?.path).toBe(path.join("E:/ws/demo", "output", "chart.png"));
+    expect(transport.files[0]?.files[0]?.name).toBe("chart.png");
+  });
+
+  it("browser 打开工作区外、非白名单或远程地址时不发送", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "tool/call",
+      sessionId: "s1",
+      callId: "c1",
+      name: "browser",
+      args: { url: "file:///E:/other/secret.png" },
+    });
+    router.route("s1", {
+      type: "tool/call",
+      sessionId: "s1",
+      callId: "c2",
+      name: "browser",
+      args: { url: "file:///E:/ws/demo/output/page.html" },
+    });
+    router.route("s1", {
+      type: "tool/call",
+      sessionId: "s1",
+      callId: "c3",
+      name: "browser",
+      args: { url: "https://example.com/a.png" },
+    });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+
+    await router.flushAll();
+    expect(transport.files).toHaveLength(0);
+  });
 });
 
 describe("增量事件过滤", () => {

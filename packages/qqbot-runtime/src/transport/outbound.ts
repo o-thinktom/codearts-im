@@ -1,8 +1,12 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { chunkMarkdownText, createNoopLogger } from "@codearts-qqbot/core";
 import type { Logger, PresentedFile, ReplyTarget } from "@codearts-qqbot/core";
 import type { KernelEvent, QuestionItem } from "@codearts-qqbot/kernel-port";
 import type { ImTransport, SendKind } from "./outbound-types.js";
+
+/** 通过内置浏览器预览的本地文件，视为交付物 */
+const PREVIEW_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".pdf"]);
 
 export interface OutboundOptions {
   transport: ImTransport;
@@ -62,6 +66,36 @@ export class OutboundRouter {
   private resolveDeliverable(filePath: string): string {
     if (path.isAbsolute(filePath)) return filePath;
     return this.workspace === undefined ? path.resolve(filePath) : path.join(this.workspace, filePath);
+  }
+
+  /**
+   * 内核不推送交付物事件时，从 `browser` 预览调用推断产物：
+   * 只接受工作区内的本地 file:// 图片/PDF，避免把任意文件发给用户。
+   */
+  private collectPreviewFile(state: TurnState, toolName: string, args: unknown): void {
+    if (toolName !== "browser" || this.workspace === undefined) return;
+    if (args === null || typeof args !== "object") return;
+    const url = (args as Record<string, unknown>)["url"];
+    if (typeof url !== "string" || !url.startsWith("file:")) return;
+
+    let filePath: string;
+    try {
+      filePath = fileURLToPath(url);
+    } catch {
+      return;
+    }
+    if (!PREVIEW_EXTENSIONS.has(path.extname(filePath).toLowerCase())) return;
+    if (!this.insideWorkspace(filePath)) return;
+    if (state.presentedCalls.has(filePath)) return;
+
+    state.presentedCalls.add(filePath);
+    state.presented.push({ path: filePath, name: path.basename(filePath) });
+  }
+
+  private insideWorkspace(filePath: string): boolean {
+    if (this.workspace === undefined) return false;
+    const rel = path.relative(path.resolve(this.workspace), path.resolve(filePath));
+    return rel.length > 0 && !rel.startsWith("..") && !path.isAbsolute(rel);
   }
 
   /** 在新一轮 prompt 之前调用，绑定投递目标 */
@@ -139,6 +173,7 @@ export class OutboundRouter {
 
       case "tool/call":
         state.toolCalls.set(event.callId, { name: event.name, args: event.args });
+        this.collectPreviewFile(state, event.name, event.args);
         return;
 
       case "tool/result": {
