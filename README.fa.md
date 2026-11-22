@@ -172,7 +172,7 @@ Issue و Pull Request پذیرفته می‌شود. `npm run check` باید م�
 
 ## مستندات
 
-[PRIVACY.md](PRIVACY.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [TODO.md](TODO.md) · [docs/](docs/)
+[PRIVACY.md](PRIVACY.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [TODO.md](TODO.md) · docs/
 
 ## مجوز
 

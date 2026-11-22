@@ -206,7 +206,7 @@
 - [PRIVACY.md](PRIVACY.md)：数据与隐私说明
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)：第三方组件与许可证
 - [TODO.md](TODO.md)：路线图与待办
-- [docs/](docs/)：内核契约、探测报告与方案设计
+- docs/：内核契约、探测报告与方案设计（本地目录，不随仓库分发）
 
 ## 许可证
 

@@ -199,7 +199,7 @@ IM-шлюз для локального **Huawei Cloud CodeArts Agent**: одн�
 - [PRIVACY.md](PRIVACY.md): данные и приватность
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): сторонние компоненты
 - [TODO.md](TODO.md): план работ
-- [docs/](docs/): контракт ядра, отчёты и проектные документы
+- docs/: контракт ядра, отчёты и проектные документы
 
 ## Лицензия
 

@@ -172,7 +172,7 @@ Se aceptan Issues y Pull Requests. `npm run check` debe pasar, la lógica nueva 
 
 ## Documentación
 
-[PRIVACY.md](PRIVACY.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [TODO.md](TODO.md) · [docs/](docs/)
+[PRIVACY.md](PRIVACY.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [TODO.md](TODO.md) · docs/
 
 ## Licencia
 

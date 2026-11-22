@@ -206,7 +206,7 @@ Issues and pull requests are welcome. Ensure `npm run check` passes, add tests f
 - [PRIVACY.md](PRIVACY.md): data and privacy
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): third-party components and licenses
 - [TODO.md](TODO.md): roadmap and backlog
-- [docs/](docs/): kernel contract, probe reports and design documents
+- docs/: kernel contract, probe reports and design documents (local, not tracked in git)
 
 ## License
 

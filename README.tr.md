@@ -172,7 +172,7 @@ Issue ve Pull Request memnuniyetle karşılanır. `npm run check` geçmeli, yeni
 
 ## Belgeler
 
-[PRIVACY.md](PRIVACY.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [TODO.md](TODO.md) · [docs/](docs/)
+[PRIVACY.md](PRIVACY.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [TODO.md](TODO.md) · docs/
 
 ## Lisans
 
