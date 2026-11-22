@@ -5,7 +5,7 @@
  *   npm run package:vsix
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -46,4 +46,14 @@ if (process.argv.includes("--vsix")) {
     stdio: "inherit",
     shell: process.platform === "win32",
   });
+
+  // 扩展 ID 仍为 codearts-qqbot-cn（保证升级路径），但产物按软件名 codearts-im 命名
+  const manifest = JSON.parse(readFileSync(path.join(PKG, "package.json"), "utf8"));
+  const produced = path.join(PKG, `${manifest.name}-${manifest.version}.vsix`);
+  const target = path.join(PKG, `codearts-im-${manifest.version}.vsix`);
+  if (existsSync(produced) && produced !== target) {
+    rmSync(target, { force: true });
+    renameSync(produced, target);
+  }
+  console.log(`[build:extension] vsix: ${path.relative(ROOT, target)}`);
 }

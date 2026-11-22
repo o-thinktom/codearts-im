@@ -82,7 +82,7 @@ Sonuç `compat-matrix.json` dosyasına yazılır ve tanılama paketine eklenebil
 
 Gereksinimler: Windows x64, CodeArts Agent 26.11.x. Node.js **gerekmez**.
 
-    & "<CodeArts dizini>\bin\codearts-agent.cmd" --install-extension "<yol>\codearts-qqbot-cn-0.3.2.vsix"
+    & "<CodeArts dizini>\bin\codearts-agent.cmd" --install-extension "<yol>\codearts-im-0.3.2.vsix"
 
 Ardından «Developer: Reload Window» çalıştırın.
 
@@ -92,9 +92,9 @@ Ardından «Developer: Reload Window» çalıştırın.
 
 1. CodeArts Agent'ı başlatın ve bir görüşme tamamlayın;
 2. İlgili kanal bağlama komutunu çalıştırın:
-   - «QQ Bot: 扫码绑定机器人» (QQ)
-   - «QQ Bot: 扫码绑定微信» (WeChat)
-   - «QQ Bot: 扫码绑定企业微信» (WeCom)
+   - «CodeArts IM: 扫码绑定机器人» (QQ)
+   - «CodeArts IM: 扫码绑定微信» (WeChat)
+   - «CodeArts IM: 扫码绑定企业微信» (WeCom)
 3. QR kodu tarayın ve resmî sayfada onaylayın;
 4. Kimlik bilgileri gizli depoya yazılır, `im/channel` değişir ve eklenti bağlantıyı yeniden başlatır;
 5. İlgili IM'de bota mesaj gönderin.
@@ -130,8 +130,8 @@ Notlar: aynı anda tek kanal etkindir; geri dönmek için yeniden tarayın. İlk
 ## Tanılama
 
 - Günlük: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 MB × 5)
-- Dışa aktarma: «QQ Bot: 导出诊断包» — eklenti/sidecar durumu, IPC kanalı, ayar özeti, son 300 satır ve uyumluluk matrisi
-- Çıktı paneli: `CodeArts QQ Bot`
+- Dışa aktarma: «CodeArts IM: 导出诊断包» — eklenti/sidecar durumu, IPC kanalı, ayar özeti, son 300 satır ve uyumluluk matrisi
+- Çıktı paneli: `CodeArts IM`
 
 ## Derleme
 

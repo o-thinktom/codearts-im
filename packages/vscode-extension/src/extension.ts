@@ -22,17 +22,17 @@ const IPC_TAG = "vscode";
 function describe(status: SidecarStatus): { text: string; tooltip: string; color?: string } {
   switch (status.state) {
     case "running":
-      return { text: "$(radio-tower) QQ Bot", tooltip: "QQ Bot 运行中", color: undefined };
+      return { text: "$(radio-tower) CodeArts IM", tooltip: "CodeArts IM 运行中", color: undefined };
     case "starting":
-      return { text: "$(sync~spin) QQ Bot", tooltip: "QQ Bot 正在启动", color: "statusBarItem.warningBackground" };
+      return { text: "$(sync~spin) CodeArts IM", tooltip: "CodeArts IM 正在启动", color: "statusBarItem.warningBackground" };
     case "failed":
       return {
-        text: "$(error) QQ Bot",
-        tooltip: `QQ Bot 异常：${status.detail ?? "未知原因"}（已重启 ${status.restarts} 次）`,
+        text: "$(error) CodeArts IM",
+        tooltip: `CodeArts IM 异常：${status.detail ?? "未知原因"}（已重启 ${status.restarts} 次）`,
         color: "statusBarItem.errorBackground",
       };
     default:
-      return { text: "$(circle-slash) QQ Bot", tooltip: "QQ Bot 已停止", color: undefined };
+      return { text: "$(circle-slash) CodeArts IM", tooltip: "CodeArts IM 已停止", color: undefined };
   }
 }
 
@@ -90,7 +90,7 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
     log("[qqbot] 自动解密失败，使用已保存的内核口令");
   } else {
     kernelSecretSource = "none";
-    log("[qqbot] 未取得内核口令：可执行「QQ Bot: 设置内核连接」手动录入");
+    log("[qqbot] 未取得内核口令：可执行「CodeArts IM: 设置内核连接」手动录入");
   }
 
   const connection: KernelConnection = {
@@ -112,7 +112,7 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
       const okCreds = await bridge.pushCredentials({ channel: "weixin", botId, token, baseUrl });
       if (!okCreds) log("[qqbot] 微信凭据下发失败");
     } else {
-      log("[qqbot] 尚未绑定微信凭据，sidecar 会等待（执行「QQ Bot: 扫码绑定微信」）");
+      log("[qqbot] 尚未绑定微信凭据，sidecar 会等待（执行「CodeArts IM: 扫码绑定微信」）");
     }
   } else if (channel === "wecom") {
     const botId = await context.secrets.get("wecom/bot-id");
@@ -121,7 +121,7 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
       const okCreds = await bridge.pushCredentials({ channel: "wecom", botId, secret });
       if (!okCreds) log("[qqbot] 企业微信凭据下发失败");
     } else {
-      log("[qqbot] 尚未绑定企业微信凭据，sidecar 会等待（执行「QQ Bot: 扫码绑定企业微信」）");
+      log("[qqbot] 尚未绑定企业微信凭据，sidecar 会等待（执行「CodeArts IM: 扫码绑定企业微信」）");
     }
   } else {
     const appId = await context.secrets.get("qqbot/app-id");
@@ -130,7 +130,7 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
       const okCreds = await bridge.pushCredentials({ channel: "qq", appId, appSecret });
       if (!okCreds) log("[qqbot] QQ 凭据下发失败");
     } else {
-      log("[qqbot] 尚未绑定 QQ 凭据，sidecar 会等待（执行「QQ Bot: 绑定账号」）");
+      log("[qqbot] 尚未绑定 QQ 凭据，sidecar 会等待（执行「CodeArts IM: 绑定账号」）");
     }
   }
 
@@ -140,12 +140,12 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
     return;
   }
   if (password === undefined) {
-    log("[qqbot] 已下发内核端口，但缺少口令：请执行「QQ Bot: 设置内核连接」录入，或等待官方接口");
+    log("[qqbot] 已下发内核端口，但缺少口令：请执行「CodeArts IM: 设置内核连接」录入，或等待官方接口");
   }
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  output = vscode.window.createOutputChannel("CodeArts QQ Bot");
+  output = vscode.window.createOutputChannel("CodeArts IM");
   context.subscriptions.push(output);
 
   statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -177,16 +177,16 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("codeartsQqbot.start", () => {
       sup.start();
-      vscode.window.showInformationMessage("QQ Bot 正在启动");
+      vscode.window.showInformationMessage("CodeArts IM 正在启动");
       void syncKernelConnection(context);
     }),
     vscode.commands.registerCommand("codeartsQqbot.stop", () => {
       sup.stop();
-      vscode.window.showInformationMessage("QQ Bot 已停止");
+      vscode.window.showInformationMessage("CodeArts IM 已停止");
     }),
     vscode.commands.registerCommand("codeartsQqbot.restart", () => {
       sup.restart();
-      vscode.window.showInformationMessage("QQ Bot 正在重启");
+      vscode.window.showInformationMessage("CodeArts IM 正在重启");
       void syncKernelConnection(context);
     }),
     vscode.commands.registerCommand("codeartsQqbot.bind", () => {
@@ -197,7 +197,7 @@ export function activate(context: vscode.ExtensionContext): void {
           await context.secrets.store("qqbot/app-secret", appSecret);
           await context.secrets.store("im/channel", "qq");
           log(`[qqbot] 扫码绑定成功 app=${appId.slice(0, 4)}***`);
-          vscode.window.showInformationMessage("扫码绑定成功，正在启动 QQ Bot");
+          vscode.window.showInformationMessage("扫码绑定成功，正在启动 CodeArts IM");
           sup.restart();
           await syncKernelConnection(context);
         },
@@ -285,14 +285,14 @@ export function activate(context: vscode.ExtensionContext): void {
       await context.secrets.store("qqbot/app-secret", secret.trim());
       await context.secrets.store("im/channel", "qq");
       log(`[qqbot] credentials stored for app ${appId.trim().slice(0, 4)}***`);
-      vscode.window.showInformationMessage("凭据已保存，正在启动 QQ Bot");
+      vscode.window.showInformationMessage("凭据已保存，正在启动 CodeArts IM");
       sup.restart();
       void syncKernelConnection(context);
     }),
     vscode.commands.registerCommand("codeartsQqbot.manageAccess", async () => {
       const snapshot = await bridge?.accessGet();
       if (snapshot === undefined) {
-        vscode.window.showWarningMessage("无法读取访问名单：sidecar 未连接，请先启动 QQ Bot");
+        vscode.window.showWarningMessage("无法读取访问名单：sidecar 未连接，请先启动 CodeArts IM");
         return;
       }
 
@@ -307,7 +307,7 @@ export function activate(context: vscode.ExtensionContext): void {
           { label: "切换访问模式", description: `c2c=${snapshot.c2c.mode} group=${snapshot.group.mode}` },
           { label: "生成配对码" },
         ],
-        { title: "QQ Bot 访问名单", ignoreFocusOut: true },
+        { title: "CodeArts IM 访问名单", ignoreFocusOut: true },
       );
       if (pick === undefined) return;
 
@@ -326,7 +326,7 @@ export function activate(context: vscode.ExtensionContext): void {
       switch (pick.label) {
         case "查看当前配置": {
           const lines = [
-            "=== QQ Bot 访问控制 ===",
+            "=== CodeArts IM 访问控制 ===",
             `revision: ${snapshot.revision}`,
             `私聊: ${snapshot.c2c.mode}（${snapshot.c2c.allow.length} 个）`,
             `群聊: ${snapshot.group.mode}（${snapshot.group.allow.length} 个）`,
@@ -455,7 +455,7 @@ export function activate(context: vscode.ExtensionContext): void {
         kernelSecretSource === "auto" ? "自动解密成功" : kernelSecretSource === "stored" ? "已保存" : "未取得";
 
       const lines = [
-        "=== CodeArts QQ Bot 状态 ===",
+        "=== CodeArts IM 状态 ===",
         `sidecar：${status.state}${status.detail === undefined ? "" : `（${status.detail}）`}`,
         `重启次数：${status.restarts}`,
         `IPC：${ipc}`,
@@ -522,7 +522,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       const sections = [
-        "# CodeArts QQ Bot 诊断包",
+        "# CodeArts IM 诊断包",
         `generatedAt=${new Date().toISOString()}`,
         "",
         "## 扩展进程",

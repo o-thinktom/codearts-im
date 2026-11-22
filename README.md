@@ -83,7 +83,7 @@
 
 要求：Windows x64、码道 26.11.x；无需安装 Node.js。
 
-    & "<码道安装目录>\bin\codearts-agent.cmd" --install-extension "<路径>\codearts-qqbot-cn-0.3.2.vsix"
+    & "<码道安装目录>\bin\codearts-agent.cmd" --install-extension "<路径>\codearts-im-0.3.2.vsix"
 
 也可在码道扩展面板选择「从 VSIX 安装」。安装后执行「Developer: Reload Window」。
 
@@ -93,9 +93,9 @@
 
 1. 启动码道并完成一次对话，确保内核已运行；
 2. 命令面板执行对应的扫码绑定：
-   - 「QQ Bot: 扫码绑定机器人」
-   - 「QQ Bot: 扫码绑定微信」
-   - 「QQ Bot: 扫码绑定企业微信」
+   - 「CodeArts IM: 扫码绑定机器人」
+   - 「CodeArts IM: 扫码绑定微信」
+   - 「CodeArts IM: 扫码绑定企业微信」
 3. 手机扫码并在官方页面确认授权；
 4. 凭据写入系统凭据库，`im/channel` 切换到对应通道，插件自动重启连接；
 5. 在对应 IM 里给机器人发消息即可。
@@ -103,7 +103,7 @@
 说明：
 
 - 同一时间只启用一个通道；切换通道会暂停其他通道，旧凭据仍保留，重新扫码即可切回；
-- 无法扫码时使用「QQ Bot: 手动填写凭据」；
+- 无法扫码时使用「CodeArts IM: 手动填写凭据」；
 - sidecar 首次启动约需 5~10 秒（SEA 解包），绑定面板会自动等待。
 
 ## 常用配置
@@ -143,8 +143,8 @@
 ## 诊断与故障排查
 
 - 日志落盘：`<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log`（4MB × 5 轮转）
-- 一键导出：「QQ Bot: 导出诊断包」，内容包含扩展/侧车状态、管道、配置快照、最近 300 行日志与兼容矩阵
-- 输出面板：`CodeArts QQ Bot`
+- 一键导出：「CodeArts IM: 导出诊断包」，内容包含扩展/侧车状态、管道、配置快照、最近 300 行日志与兼容矩阵
+- 输出面板：`CodeArts IM`
 
 | 日志 | 含义 |
 |---|---|

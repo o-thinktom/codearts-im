@@ -82,7 +82,7 @@
 
 پیش‌نیاز: Windows x64 و CodeArts Agent 26.11.x. نصب Node.js لازم **نیست**.
 
-    & "<مسیر CodeArts>\bin\codearts-agent.cmd" --install-extension "<مسیر>\codearts-qqbot-cn-0.3.2.vsix"
+    & "<مسیر CodeArts>\bin\codearts-agent.cmd" --install-extension "<مسیر>\codearts-im-0.3.2.vsix"
 
 سپس «Developer: Reload Window» را اجرا کنید.
 
@@ -92,9 +92,9 @@
 
 1. CodeArts Agent را اجرا و یک گفتگو کامل کنید تا هسته فعال شود؛
 2. فرمان اتصال کانال را اجرا کنید:
-   - «QQ Bot: 扫码绑定机器人» برای QQ
-   - «QQ Bot: 扫码绑定微信» برای WeChat
-   - «QQ Bot: 扫码绑定企业微信» برای WeCom
+   - «CodeArts IM: 扫码绑定机器人» برای QQ
+   - «CodeArts IM: 扫码绑定微信» برای WeChat
+   - «CodeArts IM: 扫码绑定企业微信» برای WeCom
 3. کد QR را اسکن و در صفحه رسمی تأیید کنید؛
 4. اطلاعات ورود ذخیره می‌شود، `im/channel` تغییر می‌کند و افزونه اتصال را راه‌اندازی مجدد می‌کند؛
 5. در همان پیام‌رسان به ربات پیام بفرستید.
@@ -130,8 +130,8 @@
 ## عیب‌یابی
 
 - گزارش: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (۴ مگابایت × ۵)
-- خروجی: «QQ Bot: 导出诊断包» شامل وضعیت، لوله IPC، تنظیمات، ۳۰۰ خط گزارش و ماتریس سازگاری
-- پنل خروجی: `CodeArts QQ Bot`
+- خروجی: «CodeArts IM: 导出诊断包» شامل وضعیت، لوله IPC، تنظیمات، ۳۰۰ خط گزارش و ماتریس سازگاری
+- پنل خروجی: `CodeArts IM`
 
 ## ساخت
 

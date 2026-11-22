@@ -1,7 +1,7 @@
 {
   "name": "codearts-qqbot-cn",
-  "displayName": "CodeArts QQ Bot",
-  "description": "通过 QQ 私聊/群聊驱动码道 CodeArts Agent",
+  "displayName": "CodeArts IM",
+  "description": "通过 QQ / 微信 / 企业微信驱动码道 CodeArts Agent",
   "version": "0.3.2",
   "publisher": "codearts-community",
   "private": true,
@@ -28,51 +28,51 @@
     "commands": [
       {
         "command": "codeartsQqbot.start",
-        "title": "QQ Bot: 启动"
+        "title": "CodeArts IM: 启动"
       },
       {
         "command": "codeartsQqbot.stop",
-        "title": "QQ Bot: 停止"
+        "title": "CodeArts IM: 停止"
       },
       {
         "command": "codeartsQqbot.restart",
-        "title": "QQ Bot: 重启"
+        "title": "CodeArts IM: 重启"
       },
       {
         "command": "codeartsQqbot.bind",
-        "title": "QQ Bot: 扫码绑定机器人"
+        "title": "CodeArts IM: 扫码绑定机器人"
       },
       {
         "command": "codeartsQqbot.bindWeixin",
-        "title": "QQ Bot: 扫码绑定微信"
+        "title": "CodeArts IM: 扫码绑定微信"
       },
       {
         "command": "codeartsQqbot.bindWecom",
-        "title": "QQ Bot: 扫码绑定企业微信"
+        "title": "CodeArts IM: 扫码绑定企业微信"
       },
       {
         "command": "codeartsQqbot.bindManual",
-        "title": "QQ Bot: 手动填写凭据"
+        "title": "CodeArts IM: 手动填写凭据"
       },
       {
         "command": "codeartsQqbot.manageAccess",
-        "title": "QQ Bot: 管理访问名单"
+        "title": "CodeArts IM: 管理访问名单"
       },
       {
         "command": "codeartsQqbot.setKernelConnection",
-        "title": "QQ Bot: 设置内核连接"
+        "title": "CodeArts IM: 设置内核连接"
       },
       {
         "command": "codeartsQqbot.showStatus",
-        "title": "QQ Bot: 显示状态"
+        "title": "CodeArts IM: 显示状态"
       },
       {
         "command": "codeartsQqbot.exportDiagnostics",
-        "title": "QQ Bot: 导出诊断包"
+        "title": "CodeArts IM: 导出诊断包"
       }
     ],
     "configuration": {
-      "title": "CodeArts QQ Bot",
+      "title": "CodeArts IM",
       "properties": {
         "codeartsQqbot.kernel.username": {
           "type": "string",

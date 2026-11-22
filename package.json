@@ -1,9 +1,9 @@
 {
-  "name": "codearts-qqbot",
+  "name": "codearts-im",
   "version": "0.3.2",
   "private": true,
   "type": "module",
-  "description": "CodeArts Agent QQ Bot plugin workspace",
+  "description": "CodeArts IM Gateway workspace",
   "workspaces": [
     "packages/*"
   ],

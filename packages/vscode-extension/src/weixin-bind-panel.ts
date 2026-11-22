@@ -65,7 +65,7 @@ const HTML = `<!DOCTYPE html>
     } else if (message.type === 'ready') {
       status.textContent = message.ok
         ? '连接已建立，可以在微信中给机器人发消息了'
-        : '已启动，但暂未确认在线；可先发送消息测试，或查看「CodeArts QQ Bot」输出日志';
+        : '已启动，但暂未确认在线；可先发送消息测试，或查看「CodeArts IM」输出日志';
       status.className = message.ok ? 'status success' : 'status';
       document.getElementById('refresh').textContent = '重新扫码';
     } else if (message.type === 'expired') {

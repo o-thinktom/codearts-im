@@ -83,7 +83,7 @@ The result is written to `compat-matrix.json` and can be embedded in the diagnos
 
 Requirements: Windows x64, CodeArts Agent 26.11.x. Node.js is **not** required.
 
-    & "<CodeArts install dir>\bin\codearts-agent.cmd" --install-extension "<path>\codearts-qqbot-cn-0.3.2.vsix"
+    & "<CodeArts install dir>\bin\codearts-agent.cmd" --install-extension "<path>\codearts-im-0.3.2.vsix"
 
 You can also install from the extension panel via “Install from VSIX”, then run “Developer: Reload Window”.
 
@@ -93,9 +93,9 @@ You can also install from the extension panel via “Install from VSIX”, then 
 
 1. Start CodeArts Agent and finish one conversation so the kernel is running;
 2. Run the matching onboarding command:
-   - “QQ Bot: 扫码绑定机器人” (bind QQ)
-   - “QQ Bot: 扫码绑定微信” (bind WeChat)
-   - “QQ Bot: 扫码绑定企业微信” (bind WeCom)
+   - “CodeArts IM: 扫码绑定机器人” (bind QQ)
+   - “CodeArts IM: 扫码绑定微信” (bind WeChat)
+   - “CodeArts IM: 扫码绑定企业微信” (bind WeCom)
 3. Scan the QR code and confirm in the official page;
 4. Credentials go to the system secret store, `im/channel` switches, and the plugin restarts the connection;
 5. Send a message to the bot in that IM.
@@ -103,7 +103,7 @@ You can also install from the extension panel via “Install from VSIX”, then 
 Notes:
 
 - Only one channel is active; switching pauses the others, and the previous credentials remain — scan again to switch back;
-- Use “QQ Bot: 手动填写凭据” (manual credentials) when scanning is unavailable;
+- Use “CodeArts IM: 手动填写凭据” (manual credentials) when scanning is unavailable;
 - The first sidecar start takes about 5–10 s (SEA unpacking); the onboarding panel waits automatically.
 
 ## Configuration
@@ -143,8 +143,8 @@ Notes:
 ## Diagnostics and troubleshooting
 
 - Log file: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 MB × 5 rotation)
-- One-click export: “QQ Bot: 导出诊断包” — includes extension/sidecar status, pipe state, config snapshot, last 300 log lines and the compat matrix
-- Output channel: `CodeArts QQ Bot`
+- One-click export: “CodeArts IM: 导出诊断包” — includes extension/sidecar status, pipe state, config snapshot, last 300 log lines and the compat matrix
+- Output channel: `CodeArts IM`
 
 | Log | Meaning |
 |---|---|

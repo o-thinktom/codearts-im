@@ -82,7 +82,7 @@ El resultado se escribe en `compat-matrix.json` y puede incluirse en el paquete 
 
 Requisitos: Windows x64 y CodeArts Agent 26.11.x. Node.js **no** es necesario.
 
-    & "<directorio de CodeArts>\bin\codearts-agent.cmd" --install-extension "<ruta>\codearts-qqbot-cn-0.3.2.vsix"
+    & "<directorio de CodeArts>\bin\codearts-agent.cmd" --install-extension "<ruta>\codearts-im-0.3.2.vsix"
 
 Después ejecute «Developer: Reload Window».
 
@@ -92,9 +92,9 @@ Después ejecute «Developer: Reload Window».
 
 1. Inicie CodeArts Agent y complete una conversación para que el núcleo esté activo;
 2. Ejecute el comando de vinculación del canal:
-   - «QQ Bot: 扫码绑定机器人» (QQ)
-   - «QQ Bot: 扫码绑定微信» (WeChat)
-   - «QQ Bot: 扫码绑定企业微信» (WeCom)
+   - «CodeArts IM: 扫码绑定机器人» (QQ)
+   - «CodeArts IM: 扫码绑定微信» (WeChat)
+   - «CodeArts IM: 扫码绑定企业微信» (WeCom)
 3. Escanee el código QR y confirme en la página oficial;
 4. Las credenciales se guardan, `im/channel` cambia y la extensión reinicia la conexión;
 5. Envíe un mensaje al bot en esa IM.
@@ -130,8 +130,8 @@ Notas: solo un canal está activo; vuelva a escanear para regresar. El primer ar
 ## Diagnóstico
 
 - Registro: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 MB × 5)
-- Exportación: «QQ Bot: 导出诊断包» incluye estado, tubería IPC, configuración, últimas 300 líneas y la matriz de compatibilidad
-- Panel de salida: `CodeArts QQ Bot`
+- Exportación: «CodeArts IM: 导出诊断包» incluye estado, tubería IPC, configuración, últimas 300 líneas y la matriz de compatibilidad
+- Panel de salida: `CodeArts IM`
 
 ## Compilación
 
