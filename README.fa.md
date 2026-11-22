@@ -105,7 +105,7 @@
 
 | تنظیم | پیش‌فرض | توضیح |
 |---|---|---|
-| `codeartsIm.enabled` | `false` | اجرای sidecar همراه IDE |
+| `codeartsIm.enabled` | `true` | اجرای sidecar همراه IDE |
 | `codeartsIm.provider` | `inferhub-provider` | ارائه‌دهنده مدل |
 | `codeartsIm.model` | `deepseek-v4.1-flash-1017` | شناسه مدل؛ خالی نگذارید |
 | `codeartsIm.agent` | `build` | نام عامل |

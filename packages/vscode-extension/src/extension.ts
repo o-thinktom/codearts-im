@@ -58,18 +58,18 @@ function log(message: string): void {
  * 说明：内核 Basic Auth 口令由码道扩展持有、不落盘，第三方扩展无法读取；
  * 因此这里自动下发 baseUrl，口令需来自用户录入或官方接口（见 kernel-probe-report）。
  */
-async function syncKernelConnection(context: vscode.ExtensionContext): Promise<void> {
-  if (bridge === undefined) return;
+async function syncKernelConnection(context: vscode.ExtensionContext): Promise<boolean> {
+  if (bridge === undefined) return false;
   const ok = await bridge.connect();
   if (!ok) {
     log("[codearts-im] sidecar IPC 未就绪，稍后重试");
-    return;
+    return false;
   }
 
   const discovered = discoverKernel();
   if (discovered === undefined) {
     log("[codearts-im] 未发现码道内核（server_config.properties 缺失）");
-    return;
+    return false;
   }
 
   const cfg = vscode.workspace.getConfiguration("codeartsIm");
@@ -137,11 +137,38 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<v
   const pushed = await bridge.pushKernel(connection);
   if (!pushed) {
     log("[codearts-im] 内核连接信息下发失败");
-    return;
+    return false;
   }
   if (password === undefined) {
     log("[codearts-im] 已下发内核端口，但缺少口令：请执行「CodeArts IM: 设置内核连接」录入，或等待官方接口");
+    return false;
   }
+  return true;
+}
+
+const KERNEL_RETRY_MS = 3_000;
+const KERNEL_WAIT_MS = 5 * 60_000;
+let kernelRetry: NodeJS.Timeout | undefined;
+
+/**
+ * 码道冷启动时内核可能晚于扩展就绪；在 5 分钟内每 3 秒重试，
+ * 直到带口令的连接成功下发（口令在首轮对话后才可能生成）。
+ */
+async function syncKernelWithRetry(context: vscode.ExtensionContext, deadline: number): Promise<void> {
+  if (kernelRetry !== undefined) {
+    clearTimeout(kernelRetry);
+    kernelRetry = undefined;
+  }
+  const ok = await syncKernelConnection(context);
+  if (ok || Date.now() >= deadline) {
+    if (!ok) log("[codearts-im] 等待内核超时，可稍后执行「CodeArts IM: 重启」");
+    return;
+  }
+  kernelRetry = setTimeout(() => {
+    kernelRetry = undefined;
+    void syncKernelWithRetry(context, deadline);
+  }, KERNEL_RETRY_MS);
+  kernelRetry.unref?.();
 }
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -187,7 +214,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("codeartsIm.restart", () => {
       sup.restart();
       vscode.window.showInformationMessage("CodeArts IM 正在重启");
-      void syncKernelConnection(context);
+      void syncKernelWithRetry(context, Date.now() + KERNEL_WAIT_MS);
     }),
     vscode.commands.registerCommand("codeartsIm.bind", () => {
       const panel = showBindPanel({
@@ -576,14 +603,18 @@ export function activate(context: vscode.ExtensionContext): void {
 
   publishStatus({ state: "stopped", restarts: 0 });
 
-  const enabled = vscode.workspace.getConfiguration("codeartsIm").get<boolean>("enabled", false);
+  const enabled = vscode.workspace.getConfiguration("codeartsIm").get<boolean>("enabled", true);
   if (enabled) {
     sup.start();
-    void syncKernelConnection(context);
+    void syncKernelWithRetry(context, Date.now() + KERNEL_WAIT_MS);
   }
 }
 
 export function deactivate(): void {
+  if (kernelRetry !== undefined) {
+    clearTimeout(kernelRetry);
+    kernelRetry = undefined;
+  }
   supervisor?.stop();
   supervisor = undefined;
   bridge?.dispose();

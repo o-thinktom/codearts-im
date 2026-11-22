@@ -46,7 +46,7 @@
 
 | 配置项 | 默认 | 说明 |
 |---|---|---|
-| `codeartsIm.enabled` | `false` | 随窗口启动时自动拉起 |
+| `codeartsIm.enabled` | `true` | 随码道启动自动拉起，并等待内核就绪（最多 5 分钟） |
 | `codeartsIm.workspace` | 当前工作区 | Agent 工作目录 |
 | `codeartsIm.provider` | `inferhub-provider` | 模型供应商 |
 | `codeartsIm.model` | `deepseek-v4.1-flash-1017` | 模型 ID；**不要留空**，否则可能被路由到空模型 |

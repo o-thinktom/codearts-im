@@ -38,6 +38,7 @@ export interface SidecarOptions {
   /** 仅用于本地调试；生产由扩展经 IPC 下发 */
   appId?: string;
   appSecret?: string;
+  /** 兼容保留：sidecar 现在常驻等待内核，不再按此超时退出 */
   waitMs?: number;
   logger?: Logger;
 }
@@ -66,7 +67,7 @@ function dataDirOf(): string {
  */
 export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle> {
   const ipcPath = options.ipcPath ?? defaultIpcPath("vscode");
-  const waitMs = options.waitMs ?? 60000;
+
   const dataDir = dataDirOf();
   const logDir = path.join(dataDir, "logs");
   const startedAt = Date.now();
@@ -182,17 +183,11 @@ export async function runSidecar(options: SidecarOptions): Promise<SidecarHandle
 
   await ipc.start();
   logger.info("sidecar ipc listening", { path: ipcPath, dataDir });
+  logger.info("sidecar waiting for kernel/credentials", { dataDir });
 
-  const timeout = new Promise<never>((_, reject) => {
-    const timer = setTimeout(() => reject(new Error("timeout waiting for kernel/credentials")), waitMs);
-    timer.unref?.();
-  });
-
-  await Promise.race([ready, timeout]).catch(async (err) => {
-    logger.error("sidecar startup failed", { err: err instanceof Error ? err.message : String(err) });
-    await ipc.close();
-    throw err;
-  });
+  // 常驻服务：内核或凭据可能晚于 sidecar 就绪（码道冷启动较慢），
+  // 这里无限等待，由扩展在发现内核后下发连接，不再因超时退出。
+  await ready;
 
   if (pending.credentials === undefined || pending.kernel === undefined) {
     await ipc.close();

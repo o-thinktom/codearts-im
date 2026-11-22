@@ -112,7 +112,7 @@ Notes:
 
 | Setting | Default | Description |
 |---|---|---|
-| `codeartsIm.enabled` | `false` | Start the sidecar with the IDE |
+| `codeartsIm.enabled` | `true` | Start with CodeArts and wait for the kernel (up to 5 minutes) |
 | `codeartsIm.provider` | `inferhub-provider` | Model provider |
 | `codeartsIm.model` | `deepseek-v4.1-flash-1017` | Model ID; never leave empty (auto-router may pick an unusable model) |
 | `codeartsIm.agent` | `build` | Agent name |

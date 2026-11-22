@@ -105,7 +105,7 @@ Notlar: aynı anda tek kanal etkindir; geri dönmek için yeniden tarayın. İlk
 
 | Ayar | Varsayılan | Açıklama |
 |---|---|---|
-| `codeartsIm.enabled` | `false` | Sidecar'ı IDE ile başlat |
+| `codeartsIm.enabled` | `true` | Sidecar'ı IDE ile başlat |
 | `codeartsIm.provider` | `inferhub-provider` | Model sağlayıcı |
 | `codeartsIm.model` | `deepseek-v4.1-flash-1017` | Model kimliği; boş bırakmayın |
 | `codeartsIm.agent` | `build` | Agent adı |

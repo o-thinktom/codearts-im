@@ -112,7 +112,7 @@
 
 | 配置项 | 默认 | 说明 |
 |---|---|---|
-| `codeartsIm.enabled` | `false` | 是否随 IDE 启动 sidecar |
+| `codeartsIm.enabled` | `true` | 随码道启动自动拉起，并等待内核就绪（最多 5 分钟） |
 | `codeartsIm.provider` | `inferhub-provider` | 模型供应商 |
 | `codeartsIm.model` | `deepseek-v4.1-flash-1017` | 模型 ID，请勿留空（auto-router 可能命中不可用模型） |
 | `codeartsIm.agent` | `build` | 使用的 Agent |

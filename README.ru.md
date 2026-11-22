@@ -109,7 +109,7 @@ IM-шлюз для локального **Huawei Cloud CodeArts Agent**: одн�
 
 | Параметр | По умолчанию | Описание |
 |---|---|---|
-| `codeartsIm.enabled` | `false` | Запускать sidecar вместе с IDE |
+| `codeartsIm.enabled` | `true` | Запускать sidecar вместе с IDE |
 | `codeartsIm.provider` | `inferhub-provider` | Провайдер модели |
 | `codeartsIm.model` | `deepseek-v4.1-flash-1017` | ID модели; не оставлять пустым |
 | `codeartsIm.agent` | `build` | Имя агента |

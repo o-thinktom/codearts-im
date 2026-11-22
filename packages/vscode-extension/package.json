@@ -87,8 +87,8 @@
         },
         "codeartsIm.enabled": {
           "type": "boolean",
-          "default": false,
-          "description": "启用 QQ 机器人"
+          "default": true,
+          "description": "随码道启动自动拉起，并等待内核就绪（最多 5 分钟）"
         },
         "codeartsIm.workspace": {
           "type": "string",

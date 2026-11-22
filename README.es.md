@@ -105,7 +105,7 @@ Notas: solo un canal está activo; vuelva a escanear para regresar. El primer ar
 
 | Ajuste | Predeterminado | Descripción |
 |---|---|---|
-| `codeartsIm.enabled` | `false` | Iniciar el sidecar con el IDE |
+| `codeartsIm.enabled` | `true` | Iniciar el sidecar con el IDE |
 | `codeartsIm.provider` | `inferhub-provider` | Proveedor del modelo |
 | `codeartsIm.model` | `deepseek-v4.1-flash-1017` | ID del modelo; no lo deje vacío |
 | `codeartsIm.agent` | `build` | Nombre del agente |
