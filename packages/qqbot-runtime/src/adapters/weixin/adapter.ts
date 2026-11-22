@@ -3,6 +3,7 @@ import path from "node:path";
 import { chunkMarkdownText, createNoopLogger } from "@codearts-qqbot/core";
 import type { Attachment, InboundMessage, Logger, PresentedFile, ReplyTarget } from "@codearts-qqbot/core";
 import type { ChannelCapability, ImAdapter } from "../../transport/adapter.js";
+import capabilities from "../../transport/capabilities.json" with { type: "json" };
 import type { ImMessageHandler, SendKind } from "../../transport/outbound-types.js";
 import { WeixinApi, WeixinApiError, type WeixinMessage } from "./weixin-api.js";
 import { WeixinMedia, detectImageExt, type WeixinMediaItem, type WeixinMediaRef } from "./weixin-media.js";
@@ -46,14 +47,7 @@ function toMediaItem(item: unknown, extra: { file_name?: string; len?: string } 
   return out;
 }
 
-export const WEIXIN_CAPABILITY: ChannelCapability = {
-  maxChars: 1800,
-  streaming: false,
-  typing: true,
-  buttons: false,
-  media: "cdn",
-  maxFileBytes: 20 * 1024 * 1024,
-};
+export const WEIXIN_CAPABILITY: ChannelCapability = capabilities.weixin as ChannelCapability;
 
 export interface WeixinAdapterOptions {
   api: WeixinApi;

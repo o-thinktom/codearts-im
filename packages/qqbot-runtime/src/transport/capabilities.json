@@ -1,0 +1,26 @@
+{
+  "qq": {
+    "maxChars": 4500,
+    "streaming": false,
+    "typing": false,
+    "buttons": false,
+    "media": "base64",
+    "maxFileBytes": 20971520
+  },
+  "weixin": {
+    "maxChars": 1800,
+    "streaming": false,
+    "typing": true,
+    "buttons": false,
+    "media": "cdn",
+    "maxFileBytes": 20971520
+  },
+  "wecom": {
+    "maxChars": 3500,
+    "streaming": false,
+    "typing": false,
+    "buttons": true,
+    "media": "sdk",
+    "maxFileBytes": 20971520
+  }
+}

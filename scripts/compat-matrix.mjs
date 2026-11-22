@@ -3,6 +3,7 @@
  *
  *   npm run compat            # 只读 + 创建/删除测试会话
  *   npm run compat -- --with-prompt   # 额外触发一次真实推理（消耗额度）
+ *   npm run compat -- --im qq,weixin,wecom   # 仅校验指定通道能力表（默认全部）
  *
  * 输出 compat-matrix.json；核心用例失败时退出码为 1，未发现内核时为 2。
  * 用于每次码道升级后回归，避免契约变化把链路打回原点。
@@ -18,6 +19,20 @@ const KERNEL_ROOT = path.join(HOME, ".codeartsdoer", "CodeArts_Agent");
 const dataDir = process.env.KERNEL_DATA_DIR ?? path.join(HOME, ".codeartsdoer", "codearts-data");
 const withPrompt = process.argv.includes("--with-prompt");
 const directory = process.cwd();
+
+const IM_CHANNELS = ["qq", "weixin", "wecom"];
+const imFlag = process.argv.indexOf("--im");
+const imRaw = imFlag >= 0 ? process.argv[imFlag + 1] : undefined;
+const imChannels = (() => {
+  if (imRaw === undefined || imRaw === "all") return [...IM_CHANNELS];
+  const list = imRaw.split(",").map((v) => v.trim()).filter((v) => v.length > 0);
+  const invalid = list.filter((v) => !IM_CHANNELS.includes(v));
+  if (invalid.length > 0) {
+    console.error(`[compat] 未知 IM 渠道：${invalid.join(",")}（可选 ${IM_CHANNELS.join("/")}）`);
+    process.exit(2);
+  }
+  return [...new Set(list)];
+})();
 
 const toBuf = (value) => {
   if (Buffer.isBuffer(value)) return value;
@@ -223,10 +238,38 @@ record("event.stream", types.length > 0, types.join(",") || "(none)");
 const deleted = await call("DELETE", `/session/${sessionId}`);
 record("session.delete", deleted.status === 200 || deleted.status === 204, `${deleted.status}`);
 
+const capabilityPath = path.join(process.cwd(), "packages/qqbot-runtime/src/transport/capabilities.json");
+let capabilityTable = {};
+try {
+  capabilityTable = JSON.parse(readFileSync(capabilityPath, "utf8"));
+  record("capabilities.file", true, Object.keys(capabilityTable).join(","));
+} catch (err) {
+  record("capabilities.file", false, err instanceof Error ? err.message : String(err));
+}
+
+const channels = {};
+for (const name of imChannels) {
+  const c = capabilityTable?.[name];
+  const valid =
+    c !== undefined &&
+    Number.isFinite(c.maxChars) &&
+    c.maxChars > 0 &&
+    Number.isFinite(c.maxFileBytes) &&
+    c.maxFileBytes > 0 &&
+    typeof c.streaming === "boolean" &&
+    typeof c.typing === "boolean" &&
+    typeof c.buttons === "boolean" &&
+    ["base64", "cdn", "sdk"].includes(c.media);
+  if (valid) channels[name] = c;
+  record(`channel.${name}`, valid, valid ? `${c.media}/${c.maxChars}` : "invalid");
+}
+
 const report = {
   generatedAt: new Date().toISOString(),
   kernel: { baseUrl: base, version: target.version, dir: target.dir },
   withPrompt,
+  im: imChannels,
+  channels,
   results,
   events: types,
   ok: results.every((r) => r.ok),

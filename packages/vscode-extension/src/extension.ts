@@ -509,6 +509,17 @@ export function activate(context: vscode.ExtensionContext): void {
       })();
 
       const errors = logs.filter((line) => /"level":"(error|warn)"/.test(line)).length;
+
+      let compatMatrix = "(未生成；先执行 npm run compat -- --im all，再重新导出诊断包)";
+      if (folder !== undefined) {
+        try {
+          const bytes = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(folder, "compat-matrix.json"));
+          compatMatrix = Buffer.from(bytes).toString("utf8");
+        } catch {
+          // 未生成时保留提示文案
+        }
+      }
+
       const sections = [
         "# CodeArts QQ Bot 诊断包",
         `generatedAt=${new Date().toISOString()}`,
@@ -548,6 +559,9 @@ export function activate(context: vscode.ExtensionContext): void {
         "",
         `## sidecar 日志（最近 ${logs.length} 行，warn/error ${errors} 条）`,
         logs.length === 0 ? "(无日志；可能 sidecar 未启动或尚未落盘)" : logs.join("\n"),
+        "",
+        "## 兼容矩阵（compat-matrix.json）",
+        compatMatrix,
       ];
       await vscode.workspace.fs.writeFile(target, Buffer.from(sections.join("\n"), "utf8"));
       vscode.window.showInformationMessage(`诊断包已导出：${target.fsPath}（不含凭据）`);

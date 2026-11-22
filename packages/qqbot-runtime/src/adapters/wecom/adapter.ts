@@ -4,19 +4,13 @@ import path from "node:path";
 import { chunkMarkdownText, createNoopLogger } from "@codearts-qqbot/core";
 import type { Attachment, InboundMessage, Logger, PresentedFile, ReplyTarget } from "@codearts-qqbot/core";
 import type { ChannelCapability, ImAdapter } from "../../transport/adapter.js";
+import capabilities from "../../transport/capabilities.json" with { type: "json" };
 import type { ImMessageHandler, SendKind } from "../../transport/outbound-types.js";
 import { detectImageExt } from "../weixin/weixin-media.js";
 
 type WecomMediaType = "file" | "image" | "voice" | "video";
 
-export const WECOM_CAPABILITY: ChannelCapability = {
-  maxChars: 3500,
-  streaming: true,
-  typing: false,
-  buttons: true,
-  media: "sdk",
-  maxFileBytes: 20 * 1024 * 1024,
-};
+export const WECOM_CAPABILITY: ChannelCapability = capabilities.wecom as ChannelCapability;
 
 /** 企业微信 WS 帧（只需要 body 与 req_id） */
 export interface WecomFrame {

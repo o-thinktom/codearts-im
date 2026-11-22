@@ -1,4 +1,5 @@
 import type { ImChannel, ReplyTarget } from "@codearts-qqbot/core";
+import capabilities from "./capabilities.json" with { type: "json" };
 import type { InboundSource, ImTransport } from "./outbound-types.js";
 
 /**
@@ -18,15 +19,11 @@ export interface ChannelCapability {
   maxFileBytes: number;
 }
 
-/** QQ 能力基线（与现有实现一致） */
-export const QQ_CAPABILITY: ChannelCapability = {
-  maxChars: 4500,
-  streaming: true,
-  typing: false,
-  buttons: false,
-  media: "base64",
-  maxFileBytes: 20 * 1024 * 1024,
-};
+/**
+ * QQ 能力基线：与 `capabilities.json` 共用同一份事实来源，
+ * 避免声明与实现漂移（例如未实现的流式被误报为支持）。
+ */
+export const QQ_CAPABILITY: ChannelCapability = capabilities.qq as ChannelCapability;
 
 /**
  * IM 渠道适配器：同时承担入站与出站，是业务层与平台之间唯一的边界。
