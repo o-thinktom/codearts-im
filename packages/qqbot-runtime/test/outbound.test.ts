@@ -121,6 +121,77 @@ describe("交付物路径解析", () => {
     expect(transport.files[0]?.files[0]?.name).toBe("chart.png");
   });
 
+  it("工具名带命名空间前缀时仍识别 browser 预览", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "tool/call",
+      sessionId: "s1",
+      callId: "c1",
+      name: "builtin:browser",
+      args: { url: "file:///E:/ws/demo/output/chart.png" },
+    });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+
+    await router.flushAll();
+    expect(transport.files[0]?.files[0]?.name).toBe("chart.png");
+  });
+
+  it("正文里的本地图片标记会发送并从文本中剥离", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "text/delta",
+      sessionId: "s1",
+      turn: 0,
+      attemptId: "m1",
+      text: "图如下\n![预览](output/chart.png)",
+    });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+
+    await router.flushAll();
+    expect(transport.files[0]?.files[0]?.path).toBe(path.join("E:/ws/demo", "output", "chart.png"));
+    expect(transport.sent.map((s) => s.text)).toEqual(["图如下"]);
+  });
+
+  it("远程图片与工作区外路径不会被当作交付物", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "text/delta",
+      sessionId: "s1",
+      turn: 0,
+      attemptId: "m1",
+      text: "![a](https://example.com/a.png) ![b](../secret.png) [[file:E:/other/x.png]]",
+    });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+
+    await router.flushAll();
+    expect(transport.files).toHaveLength(0);
+  });
+
+  it("turn/end 之后迟到的交付物仍会补发", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "deliverable",
+      sessionId: "s1",
+      files: [{ path: "output/late.png", name: "late.png" }],
+    });
+
+    await router.flushAll();
+    expect(transport.files[0]?.files[0]?.path).toBe(path.join("E:/ws/demo", "output", "late.png"));
+  });
+
   it("browser 打开工作区外、非白名单或远程地址时不发送", async () => {
     const transport = new MockImTransport();
     const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });

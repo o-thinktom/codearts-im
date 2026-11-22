@@ -134,6 +134,39 @@ describe("normalizeEvent", () => {
     ).toBeUndefined();
   });
 
+  it("browser.open.success 映射为 browser 工具调用供出站识别", () => {
+    expect(
+      normalizeEvent({
+        type: "browser.open.success",
+        properties: {
+          request: { sessionId: "s1", requestId: "r1", url: "file:///E:/ws/demo/a.png", title: "t" },
+          reply: { requestId: "r1", url: "file:///E:/ws/demo/a.png", status: "success" },
+        },
+      }),
+    ).toEqual({
+      type: "tool/call",
+      sessionId: "s1",
+      callId: "browser:r1",
+      name: "browser",
+      args: { url: "file:///E:/ws/demo/a.png" },
+    });
+  });
+
+  it("browser.open 失败或无 url 时忽略", () => {
+    expect(
+      normalizeEvent({
+        type: "browser.open.success",
+        properties: {
+          request: { sessionId: "s1", requestId: "r1", url: "file:///a.png", title: "t" },
+          reply: { requestId: "r1", url: "file:///a.png", status: "failure", error: "x" },
+        },
+      }),
+    ).toBeUndefined();
+    expect(
+      normalizeEvent({ type: "browser.open.success", properties: { request: { sessionId: "s1", requestId: "r1" } } }),
+    ).toBeUndefined();
+  });
+
   it("turn/end 携带错误原因", () => {
     const ev = normalizeEvent({
       type: "turn/end",

@@ -8,6 +8,22 @@ import type { ImTransport, SendKind } from "./outbound-types.js";
 /** 通过内置浏览器预览的本地文件，视为交付物 */
 const PREVIEW_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".pdf"]);
 
+/** 工具名可能带命名空间前缀（如 builtin:browser、mcp__browser），按尾段判定 */
+function isBrowserToolName(name: string): boolean {
+  return (name.split(/[^A-Za-z0-9]+/).pop() ?? name) === "browser";
+}
+
+/** 正文里的本地图片标记：![alt](path) 与 [[file:path]] */
+const LOCAL_FILE_MARKER = /!\[[^\]]*\]\(([^)\s]+)\)|\[\[file:([^\]\s]+)\]\]/g;
+
+/** 发送前剥离本地图片标记，避免把内部约定暴露给用户 */
+function stripLocalFileMarkers(text: string): string {
+  return text
+    .replace(LOCAL_FILE_MARKER, (whole, md: string | undefined) => (/^(?:https?:|data:)/i.test(md ?? "") ? whole : ""))
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export interface OutboundOptions {
   transport: ImTransport;
   textChunkLimit?: number;
@@ -32,6 +48,8 @@ interface TurnState {
   toolCalls: Map<string, { name: string; args: unknown }>;
   presented: PresentedFile[];
   presentedCalls: Set<string>;
+  /** 已收到 turn/end：内核迟到的事件仍允许投递 */
+  closed: boolean;
 }
 
 /**
@@ -73,7 +91,7 @@ export class OutboundRouter {
    * 只接受工作区内的本地 file:// 图片/PDF，避免把任意文件发给用户。
    */
   private collectPreviewFile(state: TurnState, toolName: string, args: unknown): void {
-    if (toolName !== "browser" || this.workspace === undefined) return;
+    if (!isBrowserToolName(toolName) || this.workspace === undefined) return;
     if (args === null || typeof args !== "object") return;
     const url = (args as Record<string, unknown>)["url"];
     if (typeof url !== "string" || !url.startsWith("file:")) return;
@@ -90,6 +108,26 @@ export class OutboundRouter {
 
     state.presentedCalls.add(filePath);
     state.presented.push({ path: filePath, name: path.basename(filePath) });
+  }
+
+  /**
+   * 兜底：正文里显式声明的本地图片。内核不推送交付物事件时，
+   * 仍能按工作区 + 扩展名白名单把产物发给用户。
+   */
+  private collectDeclaredFiles(state: TurnState, text: string): void {
+    if (this.workspace === undefined) return;
+    const pattern = new RegExp(LOCAL_FILE_MARKER.source, "g");
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text)) !== null) {
+      const raw = match[1] ?? match[2];
+      if (raw === undefined || /^(?:https?:|data:|file:|\/\/)/i.test(raw)) continue;
+      const filePath = this.resolveDeliverable(raw.replace(/^\.\//, ""));
+      if (!PREVIEW_EXTENSIONS.has(path.extname(filePath).toLowerCase())) continue;
+      if (!this.insideWorkspace(filePath)) continue;
+      if (state.presentedCalls.has(filePath)) continue;
+      state.presentedCalls.add(filePath);
+      state.presented.push({ path: filePath, name: path.basename(filePath) });
+    }
   }
 
   private insideWorkspace(filePath: string): boolean {
@@ -109,6 +147,7 @@ export class OutboundRouter {
       toolCalls: new Map(),
       presented: [],
       presentedCalls: new Set(),
+      closed: false,
     });
   }
 
@@ -202,16 +241,23 @@ export class OutboundRouter {
         const files = event.files.map((f) => ({ ...f, path: this.resolveDeliverable(f.path) }));
         const fresh = files.filter((f) => !state.presentedCalls.has(f.path));
         for (const f of fresh) state.presentedCalls.add(f.path);
+        if (state.closed) {
+          // 本轮已结束：内核迟到的交付物直接补发
+          if (fresh.length > 0) this.enqueue(sessionId, (t) => this.transport.sendFile(t, fresh));
+          return;
+        }
         state.presented.push(...fresh);
         return;
       }
 
       case "turn/end": {
-        const pending = [...state.segments.values()]
+        const merged = [...state.segments.values()]
           .sort((a, b) => a.order - b.order)
           .map((s) => s.text)
           .join("\n\n");
         state.segments.clear();
+        this.collectDeclaredFiles(state, merged);
+        const pending = stripLocalFileMarkers(merged);
         if (pending.trim().length > 0) {
           this.logger.info("reply sending (flush)", { sessionId, length: pending.length });
           this.enqueue(sessionId, (t) => this.sendText(t, pending, "reply"));
@@ -229,7 +275,12 @@ export class OutboundRouter {
             await this.transport.sendFile(t, files);
           });
         }
-        this.turns.delete(sessionId);
+        // 内核可能在本轮结束后才补发交付物事件，保留状态一小段时间
+        state.closed = true;
+        const cleanup = setTimeout(() => {
+          if (this.turns.get(sessionId) === state) this.turns.delete(sessionId);
+        }, 5000);
+        cleanup.unref?.();
         return;
       }
     }

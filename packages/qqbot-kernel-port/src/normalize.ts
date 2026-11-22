@@ -122,11 +122,13 @@ function dotEvent(rec: Rec, ctx: NormalizeContext): KernelEvent | undefined {
   const props = asRec(rec["properties"]) ?? asRec(rec["data"]) ?? rec;
   const info = asRec(props["info"]);
   const part = asRec(props["part"]);
+  const request = asRec(props["request"]);
   const sessionId = str(
     props["sessionID"],
     props["sessionId"],
     info?.["id"],
     part?.["sessionID"],
+    request?.["sessionId"],
     ctx.sessionId,
   );
   if (sessionId === undefined) return undefined;
@@ -254,6 +256,17 @@ function dotEvent(rec: Rec, ctx: NormalizeContext): KernelEvent | undefined {
       });
       if (files.length === 0) return undefined;
       return { type: "deliverable", sessionId, files };
+    }
+
+    case "browser.open.success": {
+      // 宿主侧浏览器预览不产生 message.part，这里补成 tool/call，
+      // 由出站层按 file:// + 扩展名白名单决定是否作为交付物发送。
+      const reply = asRec(props["reply"]);
+      if (str(reply?.["status"]) === "failure") return undefined;
+      const url = str(reply?.["url"], request?.["url"]);
+      if (url === undefined) return undefined;
+      const requestId = str(request?.["requestId"], reply?.["requestId"]) ?? url;
+      return { type: "tool/call", sessionId, callId: `browser:${requestId}`, name: "browser", args: { url } };
     }
 
     default:
