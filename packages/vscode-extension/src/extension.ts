@@ -9,6 +9,7 @@ import { SidecarSupervisor, type SidecarStatus } from "./sidecar.js";
 import { showBindPanel } from "./bind-panel.js";
 import { showWeixinBindPanel } from "./weixin-bind-panel.js";
 import { showWecomBindPanel } from "./wecom-bind-panel.js";
+import { redactSecrets } from "./diagnostics.js";
 
 let supervisor: SidecarSupervisor | undefined;
 let bridge: KernelBridge | undefined;
@@ -563,8 +564,13 @@ export function activate(context: vscode.ExtensionContext): void {
         "## 兼容矩阵（compat-matrix.json）",
         compatMatrix,
       ];
-      await vscode.workspace.fs.writeFile(target, Buffer.from(sections.join("\n"), "utf8"));
-      vscode.window.showInformationMessage(`诊断包已导出：${target.fsPath}（不含凭据）`);
+      const redacted = redactSecrets(sections.join("\n"));
+      if (redacted.redactions > 0) {
+        log(`[qqbot] 诊断包已脱敏 ${redacted.redactions} 处敏感字段`);
+      }
+      await vscode.workspace.fs.writeFile(target, Buffer.from(redacted.text, "utf8"));
+      const note = redacted.redactions > 0 ? `，已脱敏 ${redacted.redactions} 处` : "";
+      vscode.window.showInformationMessage(`诊断包已导出：${target.fsPath}（不含凭据${note}）`);
     }),
   );
 

@@ -32,9 +32,9 @@ describe("渠道能力表（capabilities.json）", () => {
     expect(capabilities.weixin.streaming).toBe(false);
   });
 
-  it("只有企微声明按钮能力，微信保持文本交互", () => {
-    expect(capabilities.wecom.buttons).toBe(true);
+  it("模板卡片尚未实现，三通道都按文本交互声明", () => {
     expect(capabilities.qq.buttons).toBe(false);
     expect(capabilities.weixin.buttons).toBe(false);
+    expect(capabilities.wecom.buttons).toBe(false);
   });
 });

@@ -19,7 +19,7 @@
     "maxChars": 3500,
     "streaming": true,
     "typing": false,
-    "buttons": true,
+    "buttons": false,
     "media": "sdk",
     "maxFileBytes": 20971520
   }
