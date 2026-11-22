@@ -7,10 +7,11 @@
 
 ## 0. 项目信息
 
-- [ ] 补充项目介绍（中文 / English / Русский / فارسی / Türkçe / Español），包含定位、典型场景、架构图、演示截图或 GIF
-- [ ] 在 README 顶部加入项目主体与许可证信息（ThinkTom / MIT）
+- [x] 补充项目介绍（中文 / English / Русский / فارسی / Türkçe / Español），含定位、典型场景、架构图（演示截图/GIF 待补，2026-11-22）
+- [x] 在 README 顶部加入项目主体与许可证信息（ThinkTom / MIT，2026-11-22）
+- [x] 隐私说明与第三方组件清单：`PRIVACY.md`、`THIRD_PARTY_NOTICES.md`（2026-11-22）
 - [ ] 统一项目标识：仓库 `codearts-im`；扩展 ID 暂为 `codearts-qqbot-cn`（变更需评估升级路径与市场影响）
-- [ ] 补充 Gitee 仓库描述与 Topics（`codearts-agent`、`qqbot`、`im-gateway`、`wechat`、`wecom`）
+- [ ] 补充 Gitee 仓库描述与 Topics（`codearts-agent`、`qqbot`、`im-gateway`、`wechat`、`wecom`；需在 Gitee 网页端设置）
 
 ## 1. 功能
 

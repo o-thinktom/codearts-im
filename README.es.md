@@ -1,162 +1,179 @@
 # codearts-im
 
-> CodeArts IM Gateway · Mantenido por ThinkTom
+> CodeArts IM Gateway · Mantenedor: ThinkTom · MIT
 
 [简体中文](README.md) | [English](README.en.md) | [Русский](README.ru.md) | [فارسی](README.fa.md) | [Türkçe](README.tr.md) | **Español**
 
-Una pasarela de mensajería que controla el **Huawei Cloud CodeArts Agent** local a través de QQ (WeChat / WeCom en la hoja de ruta). Envía un mensaje desde el móvil y el Agent del IDE de escritorio ejecutará la tarea y devolverá el resultado.
+Pasarela IM para controlar el **Huawei Cloud CodeArts Agent** local desde el teléfono. Canales compatibles: **QQ, WeChat (iLink) y WeCom (WeChat corporativo)**. Solo un canal está activo a la vez; las credenciales se guardan en el almacén seguro del sistema.
 
-## Características
+## Funciones
 
-- **Vinculación por QR**: crea/vincula un bot con el conector oficial de Tencent, sin escribir AppID/AppSecret manualmente
-- **Dos modos de chat**: mensajes directos y menciones en grupos (se requiere @ por defecto)
-- **Gestión de sesiones**: una sesión del kernel por interlocutor, mapeo persistente y reanudación automática tras reiniciar el IDE
-- **Entrega fiable**: deltas en streaming, fusión de respuestas multipaso, división compatible con Markdown, límite `msg_seq` con degradación
-- **Participación humana**: aprobaciones (`1` / `2`) y preguntas (`A/B/C`)
-- **Solo la respuesta final**: la cadena de pensamiento y los avisos del sistema se filtran
-- **Medios**: descarga y descifrado de imágenes/archivos entrantes, envío de archivos con degradación a ruta de texto
+- **Tres canales**: QQ (conector oficial), WeChat iLink y WeCom (`@wecom/aibot-node-sdk`)
+- **Vinculación por QR**: sin introducir claves a mano; la entrada manual es solo un respaldo
+- **Gestión de sesiones**: una sesión del núcleo por interlocutor, mapeo persistente, reanudación tras reiniciar el IDE
+- **Entrega fiable**: unión de varios pasos, división según Markdown y límites del canal, degradación ante errores
+- **Respuestas en streaming**: WeCom admite deltas a nivel de token (limitados a 600 ms)
+- **Interacción humana**: aprobaciones (`1` / `2`) y preguntas (`A/B/C`); solo el interlocutor de la sesión decide
+- **Solo la respuesta final**: se filtran la cadena de razonamiento y los avisos del sistema
+- **Medios**: descarga y descifrado de imágenes/archivos entrantes; subida según la capacidad del canal
 - **Control de acceso**: open / allowlist / disabled, códigos de emparejamiento, revocación, bloqueo de instancia única
-- **Verificable**: matriz de compatibilidad del kernel con `npm run compat` para regresión tras actualizar
+- **Observabilidad**: registro del sidecar en disco y paquete de diagnóstico de un clic (con datos enmascarados)
+
+## Capacidades por canal
+
+La tabla se define una sola vez en `packages/qqbot-runtime/src/transport/capabilities.json`.
+
+| Canal | Máx. caracteres | Streaming | Escribiendo | Botones | Medios | Grupos |
+|---|---|---|---|---|---|---|
+| QQ | 4500 | — | — | — | subida base64 | Sí (con @ por defecto) |
+| WeChat iLink | 1800 | — | Sí | — | CDN cifrado | Solo directo |
+| WeCom | 3500 | Sí | — | No implementado | subida vía SDK | Sí |
+
+### Límites de envío de archivos
+
+El **envío proactivo de archivos** funciona en los tres canales. El **envío automático junto con la respuesta** aún no está soportado:
+
+- el núcleo no emite eventos de entrega (`round.artifacts.updated` está definido pero no se envía);
+- hay respaldos implementados: imágenes/PDF locales `file://` abiertos con `browser` y marcadores `![alt](path)`, `[[file:path]]`;
+- si el canal rechaza el archivo, la respuesta incluye `no se pudo enviar el archivo: <motivo>`; nunca se pierde en silencio.
 
 ## Arquitectura
 
-    QQ Open Platform (WebSocket)
-      ↕
+    QQ / WeChat iLink / WeCom
+      ↕  (WebSocket / sondeo largo HTTPS)
     sidecar (binario único Node SEA)
       ↕ IPC local (tubería con nombre + token de un solo uso)
     Extensión de VS Code (VSIX)
       ↕ HTTP local + SSE
-    CodeArts Agent Kernel (Session / Tools / Permission / Skills)
+    Núcleo CodeArts Agent (Session / Tools / Permission / Skills)
 
-- Las credenciales y el kernel permanecen en la máquina local; el sidecar no abre puertos públicos;
-- `KernelPort` es la única frontera con el kernel; el transporte de QQ vive en `adapters/qq`;
-- La extensión gestiona el ciclo de vida, la vinculación por QR, el descubrimiento del puerto del kernel y el descifrado del secreto.
+- Las credenciales y el núcleo permanecen en la máquina local; el sidecar no abre puertos públicos;
+- `KernelPort` es el único límite con el núcleo; los canales viven en `adapters/{qq,weixin,wecom}`;
+- La extensión gestiona el ciclo de vida, la vinculación QR, el descubrimiento del puerto, el descifrado y el cambio de canal.
 
 ## Compatibilidad
 
 | Elemento | Soporte | Nota |
 |---|---|---|
-| Sistema operativo | Windows 10 1809+ / Windows 11 (x64) | El artefacto publicado es win32-x64; macOS/Linux deben compilarse en su plataforma |
-| CodeArts Agent | ≥ 26.11.100 | Verificado en 26.11.x |
-| Agent Kernel | 126.11.x | Verificado en `126.11.2-20261117200150` |
-| VS Code API | `^1.109.0` | Solo API estables |
-| QQ Open Platform | Bot WebSocket API v2 | Bot de sandbox o producción |
-| Node.js (solo desarrollo) | ≥ 20.3 | El usuario final no lo necesita; el sidecar incluye su runtime |
+| Sistema | Windows 10 1809+ / Windows 11 (x64) | El artefacto es win32-x64; macOS/Linux deben compilarse en su plataforma |
+| CodeArts Agent | ≥ 26.11.100 | Probado en 26.11.x |
+| Núcleo del agente | 126.11.x | Probado en `126.11.2-20261117200150` |
+| API de VS Code | `^1.109.0` | Solo API estables |
+| QQ Open Platform | Bot WebSocket API v2 | Bot de pruebas o producción |
+| WeChat iLink | Protocolo 2.4.6 (`bot_type=3`) | Requiere escanear con WeChat móvil |
+| WeCom | WebSocket de bot inteligente | Requiere un bot autorizado por el administrador |
+| Node.js (solo desarrollo) | ≥ 20.3 | El usuario final no lo necesita |
 
 Comprobaciones de compatibilidad:
 
-    npm run compat                    # solo lectura + crear/eliminar sesión
-    npm run compat -- --with-prompt   # añade una inferencia real (consumo mínimo de cuota)
+    npm run compat                      # solo lectura + sesión + canales
+    npm run compat -- --im wecom        # validar un canal
+    npm run compat -- --with-prompt     # añade una inferencia real (consume cuota)
+
+El resultado se escribe en `compat-matrix.json` y puede incluirse en el paquete de diagnóstico.
 
 ## Versión
 
-- Versión actual: **0.3.2** (versionado semántico; en 0.x las interfaces pueden cambiar)
-- Base de compatibilidad: CodeArts Agent 26.11.100 / Kernel 126.11.2
-- Política de actualización: tras actualizar el IDE o el kernel, ejecute primero la matriz de compatibilidad
-- Historial de cambios: commits del repositorio y documentos de diseño en `output/`
+- Actual: **0.3.2**
+- Base: CodeArts Agent 26.11.100 / núcleo 126.11.2
+- Tras actualizar el IDE o el núcleo, ejecute primero la matriz de compatibilidad
 
 ## Instalación
 
-Requisitos: Windows x64, CodeArts Agent 26.11.x. **No** se requiere Node.js.
+Requisitos: Windows x64 y CodeArts Agent 26.11.x. Node.js **no** es necesario.
 
     & "<directorio de CodeArts>\bin\codearts-agent.cmd" --install-extension "<ruta>\codearts-qqbot-cn-0.3.2.vsix"
 
-También puede usar «Install from VSIX» en la vista de extensiones y luego «Developer: Reload Window».
+Después ejecute «Developer: Reload Window».
+
+> Antes de actualizar, cierre procesos antiguos: `taskkill /IM qqbot-sidecar-win32-x64.exe /F`.
 
 ## Inicio rápido
 
-1. Inicie CodeArts Agent y complete una conversación para que el kernel esté activo;
-2. Paleta de comandos → «QQ Bot: 扫码绑定机器人» (vincular por QR);
-3. Escanee el QR oficial con QQ móvil y complete la creación/vinculación en la página de Tencent;
-4. Las credenciales se guardan en el almacén seguro del sistema y la conexión se reinicia automáticamente;
-5. Envíe un mensaje directo al bot.
+1. Inicie CodeArts Agent y complete una conversación para que el núcleo esté activo;
+2. Ejecute el comando de vinculación del canal:
+   - «QQ Bot: 扫码绑定机器人» (QQ)
+   - «QQ Bot: 扫码绑定微信» (WeChat)
+   - «QQ Bot: 扫码绑定企业微信» (WeCom)
+3. Escanee el código QR y confirme en la página oficial;
+4. Las credenciales se guardan, `im/channel` cambia y la extensión reinicia la conexión;
+5. Envíe un mensaje al bot en esa IM.
 
-Si el escaneo no está disponible, use «QQ Bot: 手动填写凭据» (entrada manual).
+Notas: solo un canal está activo; vuelva a escanear para regresar. El primer arranque del sidecar tarda 5–10 s y el panel espera automáticamente.
 
 ## Configuración
 
-| Ajuste | Valor por defecto | Descripción |
+| Ajuste | Predeterminado | Descripción |
 |---|---|---|
-| `codeartsQqbot.provider` | `inferhub-provider` | Proveedor de modelo |
-| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | ID del modelo — no lo deje vacío |
-| `codeartsQqbot.agent` | `build` | Agent a utilizar |
-| `codeartsQqbot.access.c2cMode` | `open` | Modo de acceso para mensajes directos |
-| `codeartsQqbot.access.groupMode` | `allowlist` | Modo de acceso para grupos (mantener en producción) |
-| `codeartsQqbot.textChunkLimit` | `4500` | Máximo de caracteres por mensaje |
-| `codeartsQqbot.media.maxMB` | `200` | Límite de tamaño de medios entrantes |
+| `codeartsQqbot.enabled` | `false` | Iniciar el sidecar con el IDE |
+| `codeartsQqbot.provider` | `inferhub-provider` | Proveedor del modelo |
+| `codeartsQqbot.model` | `deepseek-v4.1-flash-1017` | ID del modelo; no lo deje vacío |
+| `codeartsQqbot.agent` | `build` | Nombre del agente |
+| `codeartsQqbot.access.c2cMode` | `open` | Modo de acceso directo |
+| `codeartsQqbot.access.groupMode` | `allowlist` | Modo de acceso en grupos (recomendado) |
+| `codeartsQqbot.textChunkLimit` | `4500` | Máximo de caracteres por mensaje (prevalece el canal) |
+| `codeartsQqbot.media.maxMB` | `200` | Límite de medios entrantes |
 | `codeartsQqbot.sendFile.restrict` | `true` | Restringir rutas de archivos salientes |
 
 ## Comandos
 
-| Comando | Propósito |
-|---|---|
-| `/new` | Nueva sesión |
-| `/compact` | Compactar contexto |
-| `/model` | Ver / cambiar modelo |
-| `/stop` | Abortar el turno actual |
-| `/allow`, `/deny` | Aprobar / rechazar una solicitud |
-| `/bot-status`, `/bot-ping`, `/bot-help` | Estado, latencia, ayuda |
+`/new`, `/compact`, `/model`, `/stop`, `/allow`, `/deny`, `/bot-status`, `/bot-ping`, `/bot-help`.
 
 ## Seguridad y datos
 
-- AppSecret y la contraseña del kernel solo residen en el almacén seguro del sistema o en memoria — nunca en configuración, repositorio o registros;
-- La contraseña del kernel se lee del almacén cifrado oficial mediante descifrado de solo lectura, con entrada manual como respaldo;
-- Los archivos salientes se validan con listas `realpath` (workspace + medios), 20 MB por archivo;
-- Los registros y diagnósticos enmascaran secretos, tokens y openid;
-- Solo se entrega la respuesta final; el razonamiento y los avisos del sistema nunca llegan a QQ.
+- AppSecret / token de WeChat / secreto de WeCom solo en el almacén seguro o en memoria;
+- La contraseña del núcleo se descifra en modo solo lectura desde el almacén oficial, con respaldo manual;
+- Los archivos salientes se validan con lista blanca del espacio de trabajo (`realpath`), 20 MB por archivo;
+- Los registros y diagnósticos enmascaran secretos, tokens y openids (`[REDACTED]`);
+- Solo se entrega la respuesta final; detalles en [PRIVACY.md](PRIVACY.md).
+
+## Diagnóstico
+
+- Registro: `<globalStorage>/codearts-community.codearts-qqbot-cn/qqbot/logs/sidecar.log` (4 MB × 5)
+- Exportación: «QQ Bot: 导出诊断包» incluye estado, tubería IPC, configuración, últimas 300 líneas y la matriz de compatibilidad
+- Panel de salida: `CodeArts QQ Bot`
 
 ## Compilación
 
-Entorno de desarrollo: Windows x64, Node.js ≥ 20.3, CodeArts Agent 26.11.x para la integración.
-
     npm install
-    npm run check            # reglas de capas / tipos / pruebas unitarias
-    npm run build:sidecar    # ejecutable único Node SEA
-    npm run package:vsix     # compilar la extensión y empaquetar el VSIX
+    npm run check            # capas / tipos / pruebas (212)
+    npm run build:sidecar    # binario único Node SEA
+    npm run package:vsix     # generar el VSIX
 
-## Componentes de código abierto y agradecimientos
+## Componentes de código abierto
 
 | Componente | Versión | Uso | Licencia |
 |---|---|---|---|
-| `@tencent-connect/qqbot-connector` | 1.2.0 | Vinculación QR y conexión WebSocket de QQ | **UNLICENSED** (propietario de Tencent; sujeto a sus términos) |
-| `qrcode` | 1.5.4 | Renderizado de QR | MIT |
+| `@tencent-connect/qqbot-connector` | 1.2.0 | Vinculación QR de QQ y WebSocket | **UNLICENSED** (Tencent) |
+| `@wecom/aibot-node-sdk` | 1.0.7 | WebSocket / streaming / medios de WeCom | condiciones del paquete |
+| `qrcode` | 1.5.4 | Render de QR | MIT |
 | `esbuild` | 0.24.x | Empaquetado | MIT |
-| `TypeScript` | 5.x | Sistema de tipos y compilación | Apache-2.0 |
+| `TypeScript` | 5.x | Tipos y compilación | Apache-2.0 |
 | `Vitest` | 2.1.x | Pruebas unitarias | MIT |
-| `tsx` | 4.23.x | Ejecutar TypeScript en desarrollo | MIT |
-| `@xmanrui/dsh-im` | 5.10.0 | Referencia de protocolo WeChat/WeCom (no es dependencia directa) | MIT |
-| CodeArts Agent / Agent Kernel | 26.11.x / 126.11.x | Host y kernel | Términos del producto Huawei Cloud |
+| `tsx` | 4.23.x | Ejecutar TypeScript | MIT |
+| `@xmanrui/dsh-im` | 5.10.0 | Referencia de protocolo WeChat/WeCom | MIT |
+| CodeArts Agent / Kernel | 26.11.x / 126.11.x | Host y núcleo | términos de Huawei Cloud |
 
-Agradecimientos: Tencent QQ Open Platform y la comunidad DeepSeek Harness (`dsh-qqbot`, `dsh-im`) por sus prácticas públicas de protocolo e interacción.
-
-> **Nota de distribución**: `@tencent-connect/qqbot-connector` está marcado como UNLICENSED. Confirme los términos de licencia de Tencent antes de distribuir artefactos VSIX/sidecar empaquetados.
+> **Aviso de distribución**: `@tencent-connect/qqbot-connector` está marcado UNLICENSED. Confirme los términos de Tencent antes de distribuir. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 
 ## Limitaciones conocidas
 
-- Solo artefactos Windows x64; otras plataformas requieren compilación nativa;
-- Fuertemente acoplado a las versiones de CodeArts Agent/kernel — se requiere regresión tras actualizar;
-- La ventana de respuesta pasiva de QQ es de unos 5 minutos y como máximo 5 respuestas por mensaje;
-- Los grupos usan allowlist por defecto; `open` es solo para integración local;
-- Las aprobaciones y preguntas son de texto (dígitos/letras); las tarjetas con botones aún no están implementadas.
+- Solo artefactos Windows x64;
+- Dependencia estricta de las versiones de CodeArts Agent y del núcleo;
+- QQ: ventana de respuesta pasiva de unos 5 minutos y máximo 5 respuestas por mensaje;
+- WeChat iLink: solo mensajes directos; `ret=-14` requiere volver a escanear;
+- WeCom: tarjetas con botones no implementadas; se usa interacción de texto;
+- Los grupos usan allowlist por defecto;
+- El envío automático de archivos está limitado por la plataforma.
 
-## Solución de problemas
+## Contribuir
 
-Abra el canal de salida «CodeArts QQ Bot» y revise los marcadores del registro:
+Se aceptan Issues y Pull Requests. `npm run check` debe pasar, la lógica nueva debe incluir pruebas y el mensaje de commit debe explicar el «por qué».
 
-| Registro | Significado |
-|---|---|
-| `sidecar binary not found` | El VSIX no incluye `bin/`; reinstale |
-| `ipc bridge connected` | Extensión y sidecar conectados |
-| `已从码道加密存储获取内核口令` | Contraseña del kernel obtenida automáticamente |
-| `sidecar running` / `qq bot ready` | Servicio y conexión de QQ listos |
-| `qq message received` | Mensaje entrante de QQ recibido |
-| `inbound accepted` / `kernel prompt sending` | Enviado al kernel |
-| `reply sending` / `outbound send failed` | Resultado del envío y motivo del fallo |
+## Documentación
 
-## Contribuciones
-
-Se aceptan Issues y Pull Requests. Asegúrese de que `npm run check` pase, añada pruebas para la nueva lógica y explique el **porqué** en el mensaje de commit.
+[PRIVACY.md](PRIVACY.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [TODO.md](TODO.md) · [docs/](docs/)
 
 ## Licencia
 
-El código del proyecto se distribuye bajo **MIT License**. Los componentes de terceros conservan sus licencias; `@tencent-connect/qqbot-connector` es UNLICENSED — verifique la autorización antes de redistribuir.
+MIT License, `Copyright (c) 2026 ThinkTom`. Texto completo en [LICENSE](LICENSE).
