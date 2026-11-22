@@ -96,11 +96,17 @@ export class SidecarSupervisor {
     });
 
     child.on("error", (err) => {
+      if (child !== this.child) return;
       this.log.appendLine(`[qqbot] sidecar error: ${err.message}`);
       this.publishStatus({ state: "failed", detail: err.message, restarts: this.restarts });
     });
 
     child.on("exit", (code, signal) => {
+      // restart()/stop() 会先清空 this.child；旧进程的退出不得触发新一轮重启
+      if (child !== this.child) {
+        this.log.appendLine(`[qqbot] stale sidecar exited code=${code ?? "null"} signal=${signal ?? "null"} (ignored)`);
+        return;
+      }
       this.stopHeartbeat();
       this.child = undefined;
       if (this.stopping) {
@@ -169,6 +175,11 @@ export class SidecarSupervisor {
     this.stopping = false;
     this.restarts = 0;
     this.backoff = INITIAL_BACKOFF_MS;
-    this.start();
+    // 等旧进程释放命名管道后再拉起，避免新进程撞上 EADDRINUSE
+    this.restartTimer = setTimeout(() => {
+      this.restartTimer = undefined;
+      if (this.stopping) return;
+      this.start();
+    }, 300);
   }
 }
