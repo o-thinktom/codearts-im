@@ -66,6 +66,10 @@ const HTML = `<!DOCTYPE html>
       qr.innerHTML = '';
       status.textContent = '二维码已过期，请点击「刷新二维码」重新获取';
       status.className = 'status error';
+    } else if (message.type === 'retry') {
+      qr.textContent = '正在启动服务…';
+      status.textContent = message.message || '正在等待后台服务启动…';
+      status.className = 'status';
     } else if (message.type === 'failed') {
       status.textContent = message.reason || '绑定失败';
       status.className = 'status error';
@@ -143,13 +147,15 @@ export function showWecomBindPanel(options: WecomBindPanelOptions): vscode.Dispo
     }
   };
 
-  const start = async (): Promise<void> => {
+  const START_RETRIES = 20;
+
+  const start = async (attempt = 0): Promise<void> => {
     stop();
     scode = undefined;
-    post({ type: "starting" });
+    if (attempt === 0) post({ type: "starting" });
     try {
       const ticket = await options.startQr();
-      if (ticket === undefined) throw new Error("无法获取二维码：sidecar 未就绪或接口不可用");
+      if (ticket === undefined) throw new Error("sidecar 尚未就绪");
       if (disposed) return;
       scode = ticket.scode;
       pollMs = ticket.pollIntervalMs;
@@ -157,6 +163,13 @@ export function showWecomBindPanel(options: WecomBindPanelOptions): vscode.Dispo
       post({ type: "qr", url: dataUrl });
       schedule();
     } catch (err) {
+      if (disposed) return;
+      if (attempt < START_RETRIES) {
+        // sidecar 首次启动需数秒（SEA 解包 + 内核探测），期间 IPC 管道尚未创建
+        post({ type: "retry", message: `正在等待后台服务启动…（${attempt + 1}/${START_RETRIES}）` });
+        timer = setTimeout(() => void start(attempt + 1), 2_000);
+        return;
+      }
       post({ type: "failed", reason: err instanceof Error ? err.message : String(err) });
     }
   };
