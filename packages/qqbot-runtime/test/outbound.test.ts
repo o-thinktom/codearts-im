@@ -248,3 +248,53 @@ describe("增量事件过滤", () => {
     expect(ev).toMatchObject({ type: "text/delta", text: "收到", attemptId: "msg_1" });
   });
 });
+describe("流式回复", () => {
+  function streamingSetup(intervalMs = 10): { router: OutboundRouter; transport: MockImTransport } {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, streaming: true, deltaIntervalMs: intervalMs, workspace: "E:/ws" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    return { router, transport };
+  }
+
+  it("按节流推送增量，并用 finish 帧收尾（不重复整段）", async () => {
+    const { router, transport } = streamingSetup();
+    router.route("s1", { type: "text/delta", sessionId: "s1", turn: 0, attemptId: "m1", text: "你" });
+    router.route("s1", { type: "text/delta", sessionId: "s1", turn: 0, attemptId: "m1", text: "好" });
+    await new Promise((r) => setTimeout(r, 260));
+
+    expect(transport.deltas[0]).toMatchObject({ text: "你好", finish: false });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+    await router.flushAll();
+
+    expect(transport.deltas[transport.deltas.length - 1]).toMatchObject({ text: "你好", finish: true });
+    expect(transport.sent).toHaveLength(0);
+  });
+
+  it("未启用 streaming 时整段发送", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, streaming: false, deltaIntervalMs: 10 });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", { type: "text/delta", sessionId: "s1", turn: 0, attemptId: "m1", text: "整段" });
+    await new Promise((r) => setTimeout(r, 30));
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+    await router.flushAll();
+
+    expect(transport.deltas).toHaveLength(0);
+    expect(transport.sent[0]?.text).toBe("整段");
+  });
+
+  it("增量发送失败时回退为整段发送", async () => {
+    const { router, transport } = streamingSetup();
+    transport.sendDelta = async () => {
+      throw new Error("ack timeout");
+    };
+    router.route("s1", { type: "text/delta", sessionId: "s1", turn: 0, attemptId: "m1", text: "回退内容" });
+    await new Promise((r) => setTimeout(r, 260));
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+    await router.flushAll();
+
+    expect(transport.sent[0]?.text).toBe("回退内容");
+  });
+});

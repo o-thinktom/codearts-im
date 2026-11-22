@@ -26,10 +26,10 @@ describe("渠道能力表（capabilities.json）", () => {
     expect(capabilities.weixin.maxChars).toBe(1800);
   });
 
-  it("未实现 token 级流式前，三通道都不得声明 streaming", () => {
+  it("仅企微支持 token 级流式，QQ 与微信保持整段发送", () => {
+    expect(capabilities.wecom.streaming).toBe(true);
     expect(capabilities.qq.streaming).toBe(false);
     expect(capabilities.weixin.streaming).toBe(false);
-    expect(capabilities.wecom.streaming).toBe(false);
   });
 
   it("只有企微声明按钮能力，微信保持文本交互", () => {

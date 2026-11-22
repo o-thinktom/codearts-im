@@ -7,6 +7,8 @@ export interface ImTransport {
   stop(): Promise<void>;
   sendText(target: ReplyTarget, text: string, kind: SendKind): Promise<void>;
   sendFile(target: ReplyTarget, files: PresentedFile[]): Promise<void>;
+  /** 可选：token 级流式增量；finish=true 表示结束本次流 */
+  sendDelta?(target: ReplyTarget, text: string, finish?: boolean): Promise<void>;
 }
 
 export type ImMessageHandler = (message: import("@codearts-qqbot/core").InboundMessage) => void | Promise<void>;
@@ -27,6 +29,7 @@ export interface MockSend {
 export class MockImTransport implements ImTransport {
   readonly sent: MockSend[] = [];
   readonly files: Array<{ target: ReplyTarget; files: PresentedFile[] }> = [];
+  readonly deltas: Array<{ target: ReplyTarget; text: string; finish: boolean }> = [];
 
   async start(): Promise<void> {}
   async stop(): Promise<void> {}
@@ -37,6 +40,10 @@ export class MockImTransport implements ImTransport {
 
   async sendFile(target: ReplyTarget, files: PresentedFile[]): Promise<void> {
     this.files.push({ target, files });
+  }
+
+  async sendDelta(target: ReplyTarget, text: string, finish = false): Promise<void> {
+    this.deltas.push({ target, text, finish });
   }
 }
 

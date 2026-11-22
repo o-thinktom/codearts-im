@@ -79,6 +79,7 @@ export class QqbotApp {
       textChunkLimit: options.adapter?.capability.maxChars ?? this.config.textChunkLimit,
       showToolResults: this.config.showToolResults,
       workspace: this.config.workspace,
+      streaming: options.adapter?.capability.streaming === true,
       logger: this.logger,
     });
     this.breaker = new CircuitBreaker({

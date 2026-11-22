@@ -28,6 +28,13 @@ export interface WecomClient {
   on(event: string, handler: (...args: any[]) => void): unknown;
   reply(frame: unknown, body: unknown, cmd?: string): Promise<unknown>;
   replyStream?(frame: unknown, streamId: string, content: string, finish?: boolean): Promise<unknown>;
+  /** 非阻塞流式：上一条未 ack 时返回 'skipped'，避免中间帧堆积 */
+  replyStreamNonBlocking?(
+    frame: unknown,
+    streamId: string,
+    content: string,
+    finish?: boolean,
+  ): Promise<unknown | "skipped">;
   sendMessage?(chatId: string, body: unknown): Promise<unknown>;
   uploadMedia?(buffer: Buffer, options: { type: WecomMediaType; filename: string }): Promise<{ media_id: string }>;
   replyMedia?(frame: unknown, mediaType: WecomMediaType, mediaId: string): Promise<unknown>;
@@ -86,6 +93,8 @@ export class WecomAdapter implements ImAdapter {
   private readonly onStaleCredential: ((reason: string) => void) | undefined;
   /** peerId → 最近一次收到的帧，用于被动回复 */
   private readonly frames = new Map<string, { frame: unknown; chatId: string }>();
+  /** peerId → 当前流式消息 id（同一轮复用，finish 后清理） */
+  private readonly streams = new Map<string, string>();
   private readonly seen = new Set<string>();
   private handler: ImMessageHandler | undefined;
   private online = false;
@@ -142,7 +151,38 @@ export class WecomAdapter implements ImAdapter {
     this.started = false;
     this.online = false;
     this.frames.clear();
+    this.streams.clear();
     this.client.disconnect();
+  }
+
+  /**
+   * token 级流式：同一轮复用 streamId。
+   * 优先 non-blocking（ack 慢时 SDK 会跳过中间帧），不可用时退回阻塞版本。
+   */
+  async sendDelta(target: ReplyTarget, text: string, finish = false): Promise<void> {
+    const cached = this.frames.get(target.targetId);
+    if (cached === undefined) throw new Error("企业微信缺少可回复的被动帧");
+    const streamId = this.streamIdOf(target.targetId);
+
+    if (this.client.replyStreamNonBlocking !== undefined) {
+      const result = await this.client.replyStreamNonBlocking(cached.frame, streamId, text, finish);
+      if (finish && result !== "skipped") this.streams.delete(target.targetId);
+      return;
+    }
+    if (this.client.replyStream !== undefined) {
+      await this.client.replyStream(cached.frame, streamId, text, finish);
+      if (finish) this.streams.delete(target.targetId);
+      return;
+    }
+    throw new Error("企业微信客户端不支持流式回复");
+  }
+
+  private streamIdOf(peerId: string): string {
+    const existing = this.streams.get(peerId);
+    if (existing !== undefined) return existing;
+    const id = `codearts-im-${randomUUID()}`;
+    this.streams.set(peerId, id);
+    return id;
   }
 
   async sendText(target: ReplyTarget, text: string, _kind?: SendKind): Promise<void> {

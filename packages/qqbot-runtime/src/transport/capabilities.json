@@ -17,7 +17,7 @@
   },
   "wecom": {
     "maxChars": 3500,
-    "streaming": false,
+    "streaming": true,
     "typing": false,
     "buttons": true,
     "media": "sdk",

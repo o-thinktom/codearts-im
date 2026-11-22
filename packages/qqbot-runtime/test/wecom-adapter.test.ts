@@ -48,6 +48,15 @@ class FakeClient implements WecomClient {
     return {};
   }
 
+  async replyStreamNonBlocking(
+    frame: unknown,
+    streamId: string,
+    content: string,
+    finish?: boolean,
+  ): Promise<unknown | "skipped"> {
+    return this.replyStream(frame, streamId, content, finish);
+  }
+
   async sendMessage(chatId: string, body: any): Promise<unknown> {
     this.messages.push({ chatId, body });
     return {};
@@ -315,6 +324,35 @@ describe("WecomAdapter 出站", () => {
       [{ path: "out.pdf", name: "out.pdf" }],
     );
     expect(client.uploads[0]).toMatchObject({ type: "file", filename: "out.pdf" });
+    await adapter.stop();
+  });
+
+  it("sendDelta 复用同一 streamId，finish 后下一轮换新", async () => {
+    const { client, adapter } = setup();
+    await adapter.start();
+    client.emit("message", textFrame("hi"));
+    await new Promise((r) => setTimeout(r, 20));
+
+    const target = { scope: "c2c" as const, channel: "wecom" as const, targetId: "u1" };
+    await adapter.sendDelta(target, "你", false);
+    await adapter.sendDelta(target, "你好", false);
+    await adapter.sendDelta(target, "你好", true);
+
+    expect(client.streams[0]?.streamId).toBe(client.streams[1]?.streamId);
+    expect(client.streams[1]?.streamId).toBe(client.streams[2]?.streamId);
+    expect(client.streams[2]).toMatchObject({ content: "你好", finish: true });
+
+    await adapter.sendDelta(target, "下一轮", false);
+    expect(client.streams[3]?.streamId).not.toBe(client.streams[0]?.streamId);
+    await adapter.stop();
+  });
+
+  it("没有被动帧时 sendDelta 抛错，交由上层回退", async () => {
+    const { adapter } = setup();
+    await adapter.start();
+    await expect(
+      adapter.sendDelta({ scope: "c2c", channel: "wecom", targetId: "u404" }, "内容", false),
+    ).rejects.toThrow("被动帧");
     await adapter.stop();
   });
 });

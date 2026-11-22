@@ -32,6 +32,10 @@ export interface OutboundOptions {
   now?: () => number;
   /** 工作区根目录：交付物相对路径以此为基准解析 */
   workspace?: string;
+  /** 是否启用 token 级流式（需 transport.sendDelta 与平台支持） */
+  streaming?: boolean;
+  /** 流式增量节流间隔，默认 600ms */
+  deltaIntervalMs?: number;
 }
 
 interface Segment {
@@ -50,6 +54,11 @@ interface TurnState {
   presentedCalls: Set<string>;
   /** 已收到 turn/end：内核迟到的事件仍允许投递 */
   closed: boolean;
+  /** 已通过流式发送的全文 */
+  streamed: string;
+  deltaTimer?: NodeJS.Timeout;
+  /** 流式失败后本轮回退为整段发送 */
+  streamDisabled: boolean;
 }
 
 /**
@@ -68,6 +77,8 @@ export class OutboundRouter {
   private readonly showToolResults: boolean;
   private readonly logger: Logger;
   private readonly workspace: string | undefined;
+  private readonly streaming: boolean;
+  private readonly deltaIntervalMs: number;
   private readonly turns = new Map<string, TurnState>();
   private readonly chains = new Map<string, Promise<void>>();
   /** 每个会话最近一次的投递目标（turn 结束后保留，供提问/审批等异步通知使用） */
@@ -79,6 +90,8 @@ export class OutboundRouter {
     this.showToolResults = opts.showToolResults ?? false;
     this.logger = opts.logger ?? createNoopLogger();
     this.workspace = opts.workspace;
+    this.streaming = opts.streaming === true && opts.transport.sendDelta !== undefined;
+    this.deltaIntervalMs = Math.max(200, opts.deltaIntervalMs ?? 600);
   }
 
   private resolveDeliverable(filePath: string): string {
@@ -138,6 +151,8 @@ export class OutboundRouter {
 
   /** 在新一轮 prompt 之前调用，绑定投递目标 */
   beginTurn(sessionId: string, target: ReplyTarget, turn: number): void {
+    const previous = this.turns.get(sessionId);
+    if (previous?.deltaTimer !== undefined) clearTimeout(previous.deltaTimer);
     this.targets.set(sessionId, target);
     this.turns.set(sessionId, {
       turn,
@@ -148,6 +163,8 @@ export class OutboundRouter {
       presented: [],
       presentedCalls: new Set(),
       closed: false,
+      streamed: "",
+      streamDisabled: false,
     });
   }
 
@@ -172,6 +189,10 @@ export class OutboundRouter {
       state.toolCalls.clear();
       state.presented = [];
       state.presentedCalls.clear();
+      if (state.deltaTimer !== undefined) clearTimeout(state.deltaTimer);
+      state.deltaTimer = undefined;
+      state.streamed = "";
+      state.streamDisabled = false;
       return;
     }
 
@@ -187,6 +208,7 @@ export class OutboundRouter {
           state.segments.set(event.attemptId, { text: event.text, order: state.nextOrder });
           state.nextOrder += 1;
         }
+        this.scheduleDelta(sessionId, state);
         return;
       }
 
@@ -251,6 +273,10 @@ export class OutboundRouter {
       }
 
       case "turn/end": {
+        if (state.deltaTimer !== undefined) {
+          clearTimeout(state.deltaTimer);
+          state.deltaTimer = undefined;
+        }
         const merged = [...state.segments.values()]
           .sort((a, b) => a.order - b.order)
           .map((s) => s.text)
@@ -258,7 +284,19 @@ export class OutboundRouter {
         state.segments.clear();
         this.collectDeclaredFiles(state, merged);
         const pending = stripLocalFileMarkers(merged);
-        if (pending.trim().length > 0) {
+
+        if (state.streamed.length > 0 && this.streaming && !state.streamDisabled) {
+          // 已流式输出：用 finish 帧收尾（顺带覆盖最终文本，处理候选重写）
+          this.logger.info("reply sending (stream finish)", { sessionId, length: pending.length });
+          this.enqueue(sessionId, async (t) => {
+            try {
+              await this.transport.sendDelta?.(t, pending, true);
+            } catch (err) {
+              this.logger.warn("stream finish failed, falling back", { err: String(err) });
+              await this.sendText(t, pending, "reply");
+            }
+          });
+        } else if (pending.trim().length > 0) {
           this.logger.info("reply sending (flush)", { sessionId, length: pending.length });
           this.enqueue(sessionId, (t) => this.sendText(t, pending, "reply"));
         }
@@ -283,6 +321,39 @@ export class OutboundRouter {
         cleanup.unref?.();
         return;
       }
+    }
+  }
+
+  /** 合并所有分段文本，规则与 turn/end 一致 */
+  private mergedText(state: TurnState): string {
+    return [...state.segments.values()]
+      .sort((a, b) => a.order - b.order)
+      .map((s) => s.text)
+      .join("\n\n");
+  }
+
+  /** 节流推送流式增量：平台 ack 慢时避免中间帧堆积 */
+  private scheduleDelta(sessionId: string, state: TurnState): void {
+    if (!this.streaming || state.streamDisabled || state.deltaTimer !== undefined) return;
+    const timer = setTimeout(() => {
+      state.deltaTimer = undefined;
+      if (this.turns.get(sessionId) !== state) return;
+      void this.pushDelta(sessionId, state);
+    }, this.deltaIntervalMs);
+    timer.unref?.();
+    state.deltaTimer = timer;
+  }
+
+  private async pushDelta(sessionId: string, state: TurnState): Promise<void> {
+    if (state.streamDisabled || this.transport.sendDelta === undefined) return;
+    const text = stripLocalFileMarkers(this.mergedText(state));
+    if (text.length === 0 || text === state.streamed) return;
+    try {
+      await this.transport.sendDelta(state.target, text, false);
+      state.streamed = text;
+    } catch (err) {
+      state.streamDisabled = true;
+      this.logger.warn("stream delta failed, falling back to flush", { sessionId, err: String(err) });
     }
   }
 
