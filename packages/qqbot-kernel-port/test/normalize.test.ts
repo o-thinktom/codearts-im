@@ -72,6 +72,68 @@ describe("normalizeEvent", () => {
     });
   });
 
+  it("round.artifacts.updated 映射为交付物并只保留 deliverable", () => {
+    const ev = normalizeEvent({
+      type: "round.artifacts.updated",
+      properties: {
+        sessionID: "s1",
+        userMessageId: "u1",
+        artifacts: [
+          {
+            file_path: "E:/ws/demo/chart.png",
+            file_name: "chart.png",
+            file_size: 2048,
+            is_binary: true,
+            status: "created",
+            additions: 0,
+            deletions: 0,
+            source: "write",
+            role: "deliverable",
+          },
+          {
+            file_path: "E:/ws/demo/tmp.txt",
+            file_name: "tmp.txt",
+            file_size: 10,
+            is_binary: false,
+            status: "created",
+            additions: 1,
+            deletions: 0,
+            source: "write",
+            role: "generator",
+          },
+          {
+            file_path: "E:/ws/demo/old.md",
+            file_name: "old.md",
+            file_size: 10,
+            is_binary: false,
+            status: "deleted",
+            additions: 0,
+            deletions: 1,
+            source: "write",
+            role: "deliverable",
+          },
+        ],
+      },
+    });
+    expect(ev).toEqual({
+      type: "deliverable",
+      sessionId: "s1",
+      files: [{ path: "E:/ws/demo/chart.png", name: "chart.png", size: 2048 }],
+    });
+  });
+
+  it("round.artifacts.updated 无 deliverable 时忽略", () => {
+    expect(
+      normalizeEvent({
+        type: "round.artifacts.updated",
+        properties: {
+          sessionID: "s1",
+          artifacts: [{ file_path: "a.txt", file_name: "a.txt", role: "intermediate" }],
+        },
+      }),
+    ).toBeUndefined();
+  });
+
   it("turn/end 携带错误原因", () => {
     const ev = normalizeEvent({
       type: "turn/end",

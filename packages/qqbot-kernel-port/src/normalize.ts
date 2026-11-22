@@ -236,6 +236,26 @@ function dotEvent(rec: Rec, ctx: NormalizeContext): KernelEvent | undefined {
       return undefined;
     }
 
+    case "round.artifacts.updated": {
+      // 内核交付物事件：artifacts[].role 区分 deliverable / generator / intermediate
+      const artifacts = Array.isArray(props["artifacts"]) ? props["artifacts"] : [];
+      const files = artifacts.flatMap((raw) => {
+        const item = asRec(raw);
+        if (item === undefined) return [];
+        const role = str(item["role"]) ?? "deliverable";
+        if (role !== "deliverable") return [];
+        const status = str(item["status"]);
+        if (status === "deleted" || status === "removed") return [];
+        const filePath = str(item["file_path"], item["path"]);
+        if (filePath === undefined) return [];
+        const name = str(item["file_name"], item["name"]) ?? filePath.split(/[\\/]/).pop() ?? filePath;
+        const size = num(item["file_size"], item["size"]);
+        return [{ path: filePath, name, ...(size === undefined ? {} : { size }) }];
+      });
+      if (files.length === 0) return undefined;
+      return { type: "deliverable", sessionId, files };
+    }
+
     default:
       return undefined;
   }

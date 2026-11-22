@@ -78,6 +78,7 @@ export class QqbotApp {
       transport: this.transport,
       textChunkLimit: options.adapter?.capability.maxChars ?? this.config.textChunkLimit,
       showToolResults: this.config.showToolResults,
+      workspace: this.config.workspace,
       logger: this.logger,
     });
     this.breaker = new CircuitBreaker({

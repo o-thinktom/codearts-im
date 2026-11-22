@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { normalizeEvent } from "@codearts-qqbot/kernel-port";
 import { OutboundRouter } from "../src/transport/outbound.js";
@@ -58,6 +59,46 @@ describe("OutboundRouter 多消息合并", () => {
 
     await router.flushAll();
     expect(transport.sent.map((s) => s.text)).toEqual(["0123456789", "ABCDEF"]);
+  });
+});
+
+describe("交付物路径解析", () => {
+  it("相对路径按工作区解析后发送文件", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "deliverable",
+      sessionId: "s1",
+      files: [{ path: "out/chart.png", name: "chart.png", size: 10 }],
+    });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+
+    await router.flushAll();
+    expect(transport.files[0]?.files[0]?.path).toBe(path.join("E:/ws/demo", "out/chart.png"));
+  });
+
+  it("绝对路径保持不变且同轮去重", async () => {
+    const transport = new MockImTransport();
+    const router = new OutboundRouter({ transport, workspace: "E:/ws/demo" });
+    router.beginTurn("s1", target, 0);
+    router.route("s1", { type: "turn/start", sessionId: "s1", turn: 0 });
+    router.route("s1", {
+      type: "deliverable",
+      sessionId: "s1",
+      files: [{ path: "E:/abs/a.png", name: "a.png" }],
+    });
+    router.route("s1", {
+      type: "deliverable",
+      sessionId: "s1",
+      files: [{ path: "E:/abs/a.png", name: "a.png" }],
+    });
+    router.route("s1", { type: "turn/end", sessionId: "s1", turn: 0 });
+
+    await router.flushAll();
+    expect(transport.files[0]?.files).toHaveLength(1);
+    expect(transport.files[0]?.files[0]?.path).toBe("E:/abs/a.png");
   });
 });
 

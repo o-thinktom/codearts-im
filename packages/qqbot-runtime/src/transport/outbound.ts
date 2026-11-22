@@ -1,3 +1,4 @@
+import path from "node:path";
 import { chunkMarkdownText, createNoopLogger } from "@codearts-qqbot/core";
 import type { Logger, PresentedFile, ReplyTarget } from "@codearts-qqbot/core";
 import type { KernelEvent, QuestionItem } from "@codearts-qqbot/kernel-port";
@@ -9,6 +10,8 @@ export interface OutboundOptions {
   showToolResults?: boolean;
   logger?: Logger;
   now?: () => number;
+  /** 工作区根目录：交付物相对路径以此为基准解析 */
+  workspace?: string;
 }
 
 interface Segment {
@@ -42,6 +45,7 @@ export class OutboundRouter {
   private readonly limit: number;
   private readonly showToolResults: boolean;
   private readonly logger: Logger;
+  private readonly workspace: string | undefined;
   private readonly turns = new Map<string, TurnState>();
   private readonly chains = new Map<string, Promise<void>>();
   /** 每个会话最近一次的投递目标（turn 结束后保留，供提问/审批等异步通知使用） */
@@ -52,6 +56,12 @@ export class OutboundRouter {
     this.limit = opts.textChunkLimit ?? 4500;
     this.showToolResults = opts.showToolResults ?? false;
     this.logger = opts.logger ?? createNoopLogger();
+    this.workspace = opts.workspace;
+  }
+
+  private resolveDeliverable(filePath: string): string {
+    if (path.isAbsolute(filePath)) return filePath;
+    return this.workspace === undefined ? path.resolve(filePath) : path.join(this.workspace, filePath);
   }
 
   /** 在新一轮 prompt 之前调用，绑定投递目标 */
@@ -154,7 +164,8 @@ export class OutboundRouter {
         return;
 
       case "deliverable": {
-        const fresh = event.files.filter((f) => !state.presentedCalls.has(f.path));
+        const files = event.files.map((f) => ({ ...f, path: this.resolveDeliverable(f.path) }));
+        const fresh = files.filter((f) => !state.presentedCalls.has(f.path));
         for (const f of fresh) state.presentedCalls.add(f.path);
         state.presented.push(...fresh);
         return;
