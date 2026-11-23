@@ -95,7 +95,7 @@ You can also install from the extension panel via “Install from VSIX”, then 
 
 1. Start CodeArts Agent and finish one conversation so the kernel is running;
 2. Run the matching onboarding command:
-   - “CodeArts IM: 扫码绑定机器人” (bind QQ)
+   - “CodeArts IM: 扫码绑定QQ” (bind QQ)
    - “CodeArts IM: 扫码绑定微信” (bind WeChat)
    - “CodeArts IM: 扫码绑定企业微信” (bind WeCom)
 3. Scan the QR code and confirm in the official page;

@@ -41,7 +41,7 @@
       },
       {
         "command": "codeartsIm.bind",
-        "title": "CodeArts IM: 扫码绑定机器人"
+        "title": "CodeArts IM: 扫码绑定QQ"
       },
       {
         "command": "codeartsIm.bindWeixin",

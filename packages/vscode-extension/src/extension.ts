@@ -130,7 +130,7 @@ async function syncKernelConnection(context: vscode.ExtensionContext): Promise<b
       const okCreds = await bridge.pushCredentials({ channel: "qq", appId, appSecret });
       if (!okCreds) log("[codearts-im] QQ 凭据下发失败");
     } else {
-      log("[codearts-im] 尚未绑定 QQ 凭据，sidecar 会等待（执行「CodeArts IM: 绑定账号」）");
+      log("[codearts-im] 尚未绑定 QQ 凭据，sidecar 会等待（执行「CodeArts IM: 扫码绑定QQ」）");
     }
   }
 

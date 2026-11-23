@@ -92,7 +92,7 @@ Ardından «Developer: Reload Window» çalıştırın.
 
 1. CodeArts Agent'ı başlatın ve bir görüşme tamamlayın;
 2. İlgili kanal bağlama komutunu çalıştırın:
-   - «CodeArts IM: 扫码绑定机器人» (QQ)
+   - «CodeArts IM: 扫码绑定QQ» (QQ)
    - «CodeArts IM: 扫码绑定微信» (WeChat)
    - «CodeArts IM: 扫码绑定企业微信» (WeCom)
 3. QR kodu tarayın ve resmî sayfada onaylayın;

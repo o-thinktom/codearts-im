@@ -92,7 +92,7 @@ Después ejecute «Developer: Reload Window».
 
 1. Inicie CodeArts Agent y complete una conversación para que el núcleo esté activo;
 2. Ejecute el comando de vinculación del canal:
-   - «CodeArts IM: 扫码绑定机器人» (QQ)
+   - «CodeArts IM: 扫码绑定QQ» (QQ)
    - «CodeArts IM: 扫码绑定微信» (WeChat)
    - «CodeArts IM: 扫码绑定企业微信» (WeCom)
 3. Escanee el código QR y confirme en la página oficial;
