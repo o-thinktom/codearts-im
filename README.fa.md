@@ -4,6 +4,8 @@
 
 [简体中文](README.md) | [English](README.en.md) | [Русский](README.ru.md) | **فارسی** | [Türkçe](README.tr.md) | [Español](README.es.md)
 
+**仓库 / Repositories**：[Gitee](https://gitee.com/bunnycode/codearts-im) · [GitHub](https://github.com/o-thinktom/codearts-im)
+
 دروازه‌ای برای فرمان دادن به **Huawei Cloud CodeArts Agent** از طریق پیام‌رسان: یک پیام از گوشی بفرستید و عامل (Agent) در IDE دسکتاپ وظیفه را اجرا و نتیجه را برمی‌گرداند. کانال‌های پشتیبانی‌شده: **QQ، WeChat (iLink) و WeCom**؛ در هر زمان یک کانال فعال است و اطلاعات ورود در مخزن امن سیستم نگهداری می‌شود.
 
 ## قابلیت‌ها

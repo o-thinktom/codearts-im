@@ -4,6 +4,8 @@
 
 [简体中文](README.md) | [English](README.en.md) | [Русский](README.ru.md) | [فارسی](README.fa.md) | **Türkçe** | [Español](README.es.md)
 
+**仓库 / Repositories**：[Gitee](https://gitee.com/bunnycode/codearts-im) · [GitHub](https://github.com/o-thinktom/codearts-im)
+
 Telefonunuzdan yerel **Huawei Cloud CodeArts Agent**'ı yöneten IM ağ geçidi. Desteklenen kanallar: **QQ, WeChat (iLink) ve WeCom (kurumsal WeChat)**. Aynı anda tek kanal etkindir; kimlik bilgileri sistemin gizli deposunda tutulur.
 
 ## Özellikler

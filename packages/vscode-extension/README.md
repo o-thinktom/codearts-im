@@ -1,5 +1,7 @@
 # CodeArts IM
 
+**仓库 / Repositories**：[Gitee](https://gitee.com/bunnycode/codearts-im) · [GitHub](https://github.com/o-thinktom/codearts-im)
+
 通过 QQ / 微信（iLink）/ 企业微信智能机器人驱动本机码道（CodeArts Agent）的 VS Code 扩展。手机发一句话，本地 IDE 里的 Agent 执行并把结果回传。
 
 ## 架构

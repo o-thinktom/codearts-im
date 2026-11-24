@@ -4,6 +4,8 @@
 
 [简体中文](README.md) | [English](README.en.md) | [Русский](README.ru.md) | [فارسی](README.fa.md) | [Türkçe](README.tr.md) | **Español**
 
+**仓库 / Repositories**：[Gitee](https://gitee.com/bunnycode/codearts-im) · [GitHub](https://github.com/o-thinktom/codearts-im)
+
 Pasarela IM para controlar el **Huawei Cloud CodeArts Agent** local desde el teléfono. Canales compatibles: **QQ, WeChat (iLink) y WeCom (WeChat corporativo)**. Solo un canal está activo a la vez; las credenciales se guardan en el almacén seguro del sistema.
 
 ## Funciones

@@ -4,6 +4,8 @@
 
 [简体中文](README.md) | [English](README.en.md) | [Русский](README.ru.md) | [فارسی](README.fa.md) | [Türkçe](README.tr.md) | [Español](README.es.md)
 
+**仓库 / Repositories**：[Gitee](https://gitee.com/bunnycode/codearts-im) · [GitHub](https://github.com/o-thinktom/codearts-im)
+
 通过 IM 驱动本地 **码道 CodeArts Agent** 的网关：手机发一句话，桌面 IDE 里的 Agent 执行任务并把结果回传。当前支持 **QQ、微信（iLink）与企业微信智能机器人** 三个通道，可在凭据库中切换。
 
 ## 功能特性

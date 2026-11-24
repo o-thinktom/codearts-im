@@ -4,6 +4,8 @@
 
 [简体中文](README.md) | **English** | [Русский](README.ru.md) | [فارسی](README.fa.md) | [Türkçe](README.tr.md) | [Español](README.es.md)
 
+**仓库 / Repositories**：[Gitee](https://gitee.com/bunnycode/codearts-im) · [GitHub](https://github.com/o-thinktom/codearts-im)
+
 An IM gateway that drives the local **Huawei Cloud CodeArts Agent** from your phone. Current channels: **QQ, WeChat (iLink) and WeCom (WeChat Work) smart bot**. One channel is active at a time; credentials are kept in the system secret store and can be switched by scanning again.
 
 ## Features

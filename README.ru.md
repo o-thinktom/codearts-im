@@ -4,6 +4,8 @@
 
 [简体中文](README.md) | [English](README.en.md) | **Русский** | [فارسی](README.fa.md) | [Türkçe](README.tr.md) | [Español](README.es.md)
 
+**仓库 / Repositories**：[Gitee](https://gitee.com/bunnycode/codearts-im) · [GitHub](https://github.com/o-thinktom/codearts-im)
+
 IM-шлюз для локального **Huawei Cloud CodeArts Agent**: одно сообщение с телефона — и агент в настольной IDE выполняет задачу и возвращает результат. Поддерживаются каналы **QQ, WeChat (iLink) и WeCom (корпоративный WeChat)**; активен один канал, учётные данные хранятся в системном хранилище секретов.
 
 ## Возможности
